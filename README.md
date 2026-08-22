@@ -1,4 +1,4 @@
-# Project Title
+# Laboratorio Ingenieria de Software | UTEC 2026 s2
 
 ### Contexto
 La empresa GrupoIIS2026 ha sido pre seleccionada para desarrollar una plataforma de gestión de
