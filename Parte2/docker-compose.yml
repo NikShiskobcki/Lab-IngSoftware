@@ -1,0 +1,65 @@
+version: "3.8"
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    restart: always
+    ports:
+      - "1883:1883"
+    command: >
+      sh -c "echo 'listener 1883' > /mosquitto/config/mosquitto.conf && echo 'allow_anonymous true' >> /mosquitto/config/mosquitto.conf && mosquitto -c /mosquitto/config/mosquitto.conf"
+
+  #Base de datos MariaDB
+  mariadb:
+    image: mariadb:11
+    container_name: reservas-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: reservas
+      MYSQL_USER: reservas_app
+      MYSQL_PASSWORD: admin
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  #Turno publish
+  turno-publisher:
+    build:
+      context: ./turno-publisher
+      dockerfile: Dockerfile
+    container_name: turno-publish
+    restart: unless-stopped
+    environment:
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_TOPIC: turnos/reservas
+      PUBLISH_INTERVAL_MS: 10000
+    depends_on:
+      - mosquitto
+
+  #Turno subscibe y persist
+  turno-subscriber:
+    build:
+      context: ./turno-subscriber
+      dockerfile: Dockerfile
+    container_name: turno-subscriber
+    restart: unless-stopped
+    environment:
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_TOPIC: turnos/reservas
+      DB_URL: jdbc:mariadb://mariadb:3306/reservas
+      DB_USER: reservas_app
+      DB_PASSWORD: admin
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+
+volumes:
+  mariadb_data:
