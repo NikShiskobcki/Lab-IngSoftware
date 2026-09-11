@@ -9,9 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * Administrador de conexiones y ciclo de vida del esquema de base de datos MariaDB.
- */
+
+// Administrador de conexiones y ciclo de vida del esquema de base de datos MariaDB.
+ 
 public class DatabaseManager implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseManager.class);
@@ -26,17 +26,16 @@ public class DatabaseManager implements AutoCloseable {
         this.password = password;
     }
 
-    /**
-     * Obtiene una nueva conexión a MariaDB.
-     */
+    
+    //Obtiene una nueva conexión a MariaDB.
+    
     public Connection getConnection() throws SQLException {
         return DriverManager.getConnection(url, user, password);
     }
 
-    /**
-     * Espera e inicializa la base de datos, creando el esquema DDL y datos semilla
-     * si aún no han sido cargados.
-     */
+    
+    //Espera e inicializa la base de datos
+    
     public void waitAndInitialize() {
         boolean ready = false;
         int retries = 0;
@@ -138,7 +137,7 @@ public class DatabaseManager implements AutoCloseable {
                     (2, 'Taller Mecánico & Servicios Rápidos', 'Bvar. Artigas 3250', '098445566', 'info@tallerapido.uy', '09:00:00', '18:00:00');
                 """);
 
-                // Personal inicial (incluyendo activos, un inactivo para pruebas de reglas de negocio, y el ID 8 de Parte 1)
+                // Personal inicial (incluyendo activos, un inactivo para pruebas de reglas de negocio)
                 stmt.executeUpdate("""
                     INSERT INTO personal (id, id_establecimiento, nombre, especialidad, costo_consulta, duracion_estandar_minutos, estado)
                     VALUES
@@ -158,6 +157,6 @@ public class DatabaseManager implements AutoCloseable {
 
     @Override
     public void close() {
-        // En caso de usar pool de conexiones se liberaría aquí
+        // En caso de usar pool de conexiones seria acá 
     }
 }

@@ -8,10 +8,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Generador de datos aleatorios pero coherentes con el modelo de dominio
- * para simular clientes que solicitan turnos.
- */
+
+ //Generador de datos aleatorios 
 public class RandomTurnoGenerator {
 
     private final Random random = new Random();
@@ -28,7 +26,7 @@ public class RandomTurnoGenerator {
     );
 
     // IDs de personal disponibles en la base de datos:
-    // 1, 2, 3, 8 son ACTIVO; 4 es INACTIVO (para probar la regla de negocio de rechazo)
+    //4 es INACTIVO (para probar la regla de negocio de rechazo)
     private static final List<Integer> IDS_PERSONAL = List.of(1, 2, 3, 8, 8, 1, 2, 4);
 
     // Horarios válidos de 30 minutos dentro de la jornada laboral
@@ -52,9 +50,9 @@ public class RandomTurnoGenerator {
             LocalTime.of(18, 0)
     );
 
-    /**
-     * Genera un TurnoDTO con datos aleatorios simulando una reserva.
-     */
+    
+     // Genera un TurnoDTO con datos aleatorios simulando una reserva.
+     
     public TurnoDTO generateRandomTurno() {
         String nombre = NOMBRES_CLIENTES.get(random.nextInt(NOMBRES_CLIENTES.size()));
         String dominio = DOMINIOS_EMAIL.get(random.nextInt(DOMINIOS_EMAIL.size()));

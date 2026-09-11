@@ -7,10 +7,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-/**
- * Representa los datos del turno solicitado por el cliente.
- * Compatible con el formato especificado en la Parte 1 y los requerimientos de dominio de la Parte 2.
- */
+ //Representa los datos del turno solicitado por el cliente.
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TurnoDTO {
 

@@ -1,7 +1,5 @@
 #!/bin/bash
-# ==============================================================================
 # Script para visualizar los eventos de reservas generados y consumidos por MQTT
-# ==============================================================================
 
 echo "=================================================================="
 echo " Monitoreando eventos de reserva de turnos en tiempo real...      "

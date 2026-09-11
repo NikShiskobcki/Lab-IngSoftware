@@ -12,12 +12,8 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.time.LocalTime;
 
-/**
- * Validador de las reglas de negocio del dominio para las reservas de turnos:
- * 1. El profesional debe existir y estar en estado 'ACTIVO'.
- * 2. El horario del turno (duración 30 min) debe estar dentro de la agenda del establecimiento.
- * 3. No puede existir otro turno para el mismo profesional en el mismo horario.
- */
+
+ //Validador de las reglas de negocio del dominio para las reservas de turnos:
 public class TurnoValidator {
 
     private static final Logger logger = LoggerFactory.getLogger(TurnoValidator.class);
@@ -61,9 +57,9 @@ public class TurnoValidator {
         }
     }
 
-    /**
-     * Valida si la solicitud de turno cumple todas las reglas de negocio.
-     */
+    
+      //Valida si la solicitud de turno cumple todas las reglas de negocio.
+     
     public ValidationResult validate(TurnoDTO turno, Connection conn) throws SQLException {
         if (turno == null) {
             return ValidationResult.reject("El contenido del turno es nulo.");

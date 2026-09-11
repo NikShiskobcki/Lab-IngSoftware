@@ -10,10 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Aplicación principal del generador y publicador de turnos.
- * Ejecuta periódicamente la generación de un turno aleatorio y lo publica en MQTT.
- */
+
 public class PublisherApp {
 
     private static final Logger logger = LoggerFactory.getLogger(PublisherApp.class);
@@ -30,7 +27,7 @@ public class PublisherApp {
         TurnoPublisherService publisherService = new TurnoPublisherService(brokerUrl, topic);
         RandomTurnoGenerator generator = new RandomTurnoGenerator();
 
-        // Conectar al broker con reintentos mientras Mosquitto inicia
+        // Conectar al broker con reintentos mientras Mosquito inicia
         boolean connected = false;
         while (!connected) {
             try {
@@ -49,7 +46,7 @@ public class PublisherApp {
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-        // Registrar cierre ordenado (graceful shutdown)
+        // Registrar cierre ordenado
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Deteniendo Publisher...");
             scheduler.shutdown();
@@ -64,7 +61,7 @@ public class PublisherApp {
             logger.info("Publisher detenido con éxito.");
         }));
 
-        // Tarea periódica de generación y publicación
+        // Generación y publicación
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 TurnoDTO turnoAleatorio = generator.generateRandomTurno();
