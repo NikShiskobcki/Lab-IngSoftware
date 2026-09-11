@@ -5,10 +5,9 @@ import com.laboratorio.turnos.subscriber.mqtt.TurnoMqttSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Punto de entrada principal para el componente Consumidor/Suscriptor de Turnos.
- * Inicializa la base de datos MariaDB, conecta el suscriptor MQTT y persiste las reservas.
- */
+
+ // Punto de entrada principal para el suscriptor de Turnos.
+
 public class SubscriberApp {
 
     private static final Logger logger = LoggerFactory.getLogger(SubscriberApp.class);

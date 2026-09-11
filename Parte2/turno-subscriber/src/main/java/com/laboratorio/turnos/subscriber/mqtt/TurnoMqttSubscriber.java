@@ -15,10 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 
-/**
- * Suscriptor MQTT que escucha solicitudes de reserva de turnos,
- * valida las reglas del dominio y las persiste en MariaDB.
- */
+
 public class TurnoMqttSubscriber implements MqttCallbackExtended, AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(TurnoMqttSubscriber.class);

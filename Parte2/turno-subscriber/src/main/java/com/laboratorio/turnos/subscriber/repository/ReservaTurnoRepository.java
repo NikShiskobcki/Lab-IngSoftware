@@ -14,21 +14,13 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
-/**
- * Repositorio de persistencia de reservas de turnos en MariaDB.
- */
+
+ // Repositorio de persistencia de reservas de turnos en MariaDB.
+ 
 public class ReservaTurnoRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(ReservaTurnoRepository.class);
 
-    /**
-     * Persiste una nueva reserva de turno en la base de datos.
-     *
-     * @param turno DTO del turno solicitado.
-     * @param fechaRegistro Timestamp de cuando se emitió la solicitud.
-     * @param conn Conexión SQL activa.
-     * @return El ID generado en la base de datos.
-     */
     public int saveReserva(TurnoDTO turno, LocalDateTime fechaRegistro, Connection conn) throws SQLException {
         String sql = """
             INSERT INTO reservas_turnos 

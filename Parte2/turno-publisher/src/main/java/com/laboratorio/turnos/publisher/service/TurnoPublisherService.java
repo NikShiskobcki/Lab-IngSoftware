@@ -12,14 +12,8 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
-/**
- * Servicio encargado de publicar reservas de turnos en el broker MQTT.
- * 
- * NOTA DE ARQUITECTURA / ADAPTABILIDAD:
- * Esta clase está diseñada para ser fácilmente inyectada y reutilizada
- * en futuras entregas desde una API REST (por ejemplo Spring Boot o Jakarta RS),
- * simplemente invocando el método {@link #publishTurno(TurnoDTO)}.
- */
+//Servicio encargado de publicar reservas de turnos en el broker MQTT.
+ 
 public class TurnoPublisherService implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(TurnoPublisherService.class);
@@ -38,9 +32,9 @@ public class TurnoPublisherService implements AutoCloseable {
         this.objectMapper.registerModule(new JavaTimeModule());
     }
 
-    /**
-     * Inicializa y conecta el cliente MQTT al broker con reintentos.
-     */
+    
+     //Inicializa y conecta el cliente MQTT al broker con reintentos.
+    
     public synchronized void connect() throws MqttException {
         if (mqttClient != null && mqttClient.isConnected()) {
             return;
@@ -58,14 +52,8 @@ public class TurnoPublisherService implements AutoCloseable {
         logger.info("Conectado exitosamente al broker MQTT!");
     }
 
-    /**
-     * Publica un turno recibido como parámetro en el tópico MQTT.
-     * Este es el método central que consumirá la futura API REST.
-     *
-     * @param turno Datos del turno solicitado.
-     * @return El mensaje completo publicado.
-     * @throws Exception Si ocurre un error al serializar o publicar en MQTT.
-     */
+    //Publica un turno recibido como parámetro en el tópico MQTT.
+
     public synchronized ReservaMessageDTO publishTurno(TurnoDTO turno) throws Exception {
         if (mqttClient == null || !mqttClient.isConnected()) {
             logger.warn("Cliente MQTT desconectado. Intentando reconectar...");

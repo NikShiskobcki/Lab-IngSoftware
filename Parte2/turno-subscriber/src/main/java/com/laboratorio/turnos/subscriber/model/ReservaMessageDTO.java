@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 
-/**
- * Mensaje recibido a través del broker MQTT.
- */
+
+ //Mensaje recibido a través del broker MQTT.
+ 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ReservaMessageDTO {
 

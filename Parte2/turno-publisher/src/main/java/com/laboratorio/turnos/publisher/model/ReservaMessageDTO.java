@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 
-/**
- * Representa el mensaje de evento JSON publicado hacia el broker MQTT.
- */
+
+ // Representa el mensaje de evento JSON publicado hacia el broker MQTT.
+ 
 public class ReservaMessageDTO {
 
     @JsonProperty("status")

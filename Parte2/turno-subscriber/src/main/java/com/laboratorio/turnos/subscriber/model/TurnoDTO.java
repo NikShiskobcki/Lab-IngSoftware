@@ -7,9 +7,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-/**
- * Modelo de datos del turno recibido desde MQTT.
- */
+//Modelo de datos del turno recibido desde MQTT.
+ 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TurnoDTO {
 
