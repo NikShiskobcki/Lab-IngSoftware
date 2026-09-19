@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: turnos-api
+  datasource:
+    url: jdbc:mariadb://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:reservas}
+    username: ${DB_USER:reservas_app}
+    password: ${DB_PASSWORD:admin}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    # El esquema lo crea y gestiona turno-subscriber (DatabaseManager.java).
+    # Esta API solo lee/escribe sobre las tablas ya existentes.
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
