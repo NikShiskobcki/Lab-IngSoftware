@@ -26,19 +26,19 @@ services:
       timeout: 5s
       retries: 10
 
-  #Turno publish
-  turno-publisher:
-    build:
-      context: ./turno-publisher
-      dockerfile: Dockerfile
-    container_name: turno-publish
-    restart: unless-stopped
-    environment:
-      MQTT_BROKER_URL: tcp://mosquitto:1883
-      MQTT_TOPIC: turnos/reservas
-      PUBLISH_INTERVAL_MS: 10000
-    depends_on:
-      - mosquitto
+  # generador automatico desactivado para usar la api rest
+  # turno-publisher:
+  #   build:
+  #     context: ./turno-publisher
+  #     dockerfile: Dockerfile
+  #   container_name: turno-publish
+  #   restart: unless-stopped
+  #   environment:
+  #     MQTT_BROKER_URL: tcp://mosquitto:1883
+  #     MQTT_TOPIC: turnos/reservas
+  #     PUBLISH_INTERVAL_MS: 10000
+  #   depends_on:
+  #     - mosquitto
 
   #Turno subscibe y persist
   turno-subscriber:
