@@ -1,0 +1,299 @@
+openapi: 3.0.3
+info:
+  title: API de Gestion de Turnos y Reservas - TaPronto
+  description: API REST para gestion de establecimientos, personal y reservas de turnos.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: servidor local de desarrollo
+
+paths:
+  # api de reservas
+  /reservas:
+    post:
+      tags:
+        - Reservas
+      summary: generar nueva reserva
+      description: publica la solicitud al broker mqtt mosquitto para validacion y persistencia.
+      operationId: generarReserva
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearReservaDTO'
+      responses:
+        '201':
+          description: solicitud enviada correctamente a procesamiento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaGenerarReserva'
+        '400':
+          description: datos invalidos en la solicitud
+
+    get:
+      tags:
+        - Reservas
+      summary: listar reservas
+      description: retorna todas las reservas o filtra por idPersonal.
+      operationId: listarReservas
+      parameters:
+        - name: idPersonal
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: id opcional del personal para filtrar
+      responses:
+        '200':
+          description: lista de reservas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reserva'
+
+  /reservas/{id}:
+    get:
+      tags:
+        - Reservas
+      summary: consultar reserva por id
+      description: obtiene los datos de una reserva por su identificador.
+      operationId: buscarPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: reserva encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+        '404':
+          description: reserva no encontrada
+
+    delete:
+      tags:
+        - Reservas
+      summary: eliminar reserva
+      description: elimina una reserva existente de la base de datos.
+      operationId: eliminarReserva
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: reserva eliminada correctamente
+        '404':
+          description: reserva no encontrada
+
+  # api de establecimientos
+  /establecimientos:
+    get:
+      tags:
+        - Establecimientos
+      summary: listar establecimientos
+      responses:
+        '200':
+          description: listado obtenido
+    post:
+      tags:
+        - Establecimientos
+      summary: crear establecimiento
+      responses:
+        '201':
+          description: establecimiento creado
+
+  /establecimientos/{id}:
+    get:
+      tags:
+        - Establecimientos
+      summary: obtener establecimiento por id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: datos del establecimiento
+        '404':
+          description: establecimiento no encontrado
+    put:
+      tags:
+        - Establecimientos
+      summary: actualizar establecimiento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: establecimiento actualizado
+        '404':
+          description: establecimiento no encontrado
+    delete:
+      tags:
+        - Establecimientos
+      summary: eliminar establecimiento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: establecimiento eliminado
+        '404':
+          description: establecimiento no encontrado
+
+  # api de personal
+  /personal:
+    get:
+      tags:
+        - Personal
+      summary: listar personal
+      responses:
+        '200':
+          description: listado obtenido
+    post:
+      tags:
+        - Personal
+      summary: crear personal
+      responses:
+        '201':
+          description: personal creado
+
+  /personal/{id}:
+    get:
+      tags:
+        - Personal
+      summary: obtener personal por id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: datos del personal
+        '404':
+          description: personal no encontrado
+    put:
+      tags:
+        - Personal
+      summary: actualizar personal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: personal actualizado
+        '404':
+          description: personal no encontrado
+    delete:
+      tags:
+        - Personal
+      summary: eliminar personal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: personal eliminado
+        '404':
+          description: personal no encontrado
+
+components:
+  schemas:
+    CrearReservaDTO:
+      type: object
+      required:
+        - idPersonal
+        - emailCliente
+        - telefonoCliente
+        - fecha
+        - hora
+      properties:
+        idPersonal:
+          type: integer
+          example: 1
+        emailCliente:
+          type: string
+          format: email
+          example: cliente@correo.com
+        telefonoCliente:
+          type: string
+          example: "099123456"
+        fecha:
+          type: string
+          format: date
+          example: "2026-10-15"
+        hora:
+          type: string
+          example: "10:00"
+
+    Reserva:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        idPersonal:
+          type: integer
+          example: 1
+        emailSolicitante:
+          type: string
+          example: cliente@correo.com
+        telefonoSolicitante:
+          type: string
+          example: "099123456"
+        fechaTurno:
+          type: string
+          format: date
+          example: "2026-10-15"
+        horaTurno:
+          type: string
+          example: "10:00:00"
+        duracionMinutos:
+          type: integer
+          example: 30
+        fechaRegistro:
+          type: string
+          format: date-time
+          example: "2026-10-15T10:00:00"
+        estado:
+          type: string
+          example: CONFIRMADO
+
+    RespuestaGenerarReserva:
+      type: object
+      properties:
+        status:
+          type: string
+          example: SOLICITUD_ENVIADA
+        mensaje:
+          type: string
+          example: reserva enviada a mosquitto para ser validada y persistida
+        datos:
+          $ref: '#/components/schemas/CrearReservaDTO'
