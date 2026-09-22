@@ -2,3 +2,8 @@
 /Parte2/turno-subscriber/target/
 /Parte2/turno-publisher/dependency-reduced-pom.xml
 /Parte2/turno-subscriber/dependency-reduced-pom.xml
+
+# Archivos generados por IDE y compilacion
+.DS_Store
+.idea/
+target/
