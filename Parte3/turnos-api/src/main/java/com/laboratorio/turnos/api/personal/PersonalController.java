@@ -9,6 +9,11 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.laboratorio.turnos.api.personal.dto.AgendaResponse;
+import org.springframework.format.annotation.DateTimeFormat;
+import com.laboratorio.turnos.api.personal.dto.DisponibilidadResponse;
+
+import java.time.LocalDate;
 
 import java.util.List;
 
@@ -18,10 +23,12 @@ import java.util.List;
 public class PersonalController {
     private final PersonalRepository repository;
     private final EstablecimientoRepository establecimientoRepository;
+    private final PersonalConsultaService consultaService;
 
-    public PersonalController(PersonalRepository repository, EstablecimientoRepository establecimientoRepository){
+    public PersonalController(PersonalRepository repository, EstablecimientoRepository establecimientoRepository, PersonalConsultaService consultaService){
         this.repository = repository;
         this.establecimientoRepository = establecimientoRepository;
+        this.consultaService=consultaService;
     }
 
     @Operation(summary = "Registrar personal")
@@ -64,6 +71,33 @@ public class PersonalController {
         }
         repository.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    //La consulta debe hacerse con el formato de fecha AAAA-MM-DD
+    @Operation(summary = "Consultar agenda de un empleado")
+    @GetMapping("/{id}/agenda")
+    public ResponseEntity<AgendaResponse> consultarAgenda(
+            @PathVariable Long id,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fecha
+    ) {
+        return ResponseEntity.ok(
+                consultaService.consultarAgenda(id, fecha)
+        );
+    }
+
+    @Operation(summary = "Consultar disponibilidad de un empleado")
+    @GetMapping("/{id}/disponibilidad")
+    public ResponseEntity<DisponibilidadResponse> consultarDisponibilidad(
+            @PathVariable Long id,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fecha
+    ) {
+        return ResponseEntity.ok(
+                consultaService.consultarDisponibilidad(id, fecha)
+        );
     }
 
 
