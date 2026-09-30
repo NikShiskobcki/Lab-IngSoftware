@@ -37,23 +37,27 @@ public class TurnoValidadorService {
     @Scheduled(fixedRateString = "${validador.intervalo-ms:60000}")
     @Transactional
     public void revisarTurnosNuevos() {
-        logger.info("iniciando ciclo de revision de turnos nuevos");
+        try {
+            logger.info("iniciando ciclo de revision de turnos nuevos");
 
-        List<String> estadosPendientes = List.of("SOLICITADO", "PENDIENTE", "CONFIRMADO");
-        List<ReservaTurno> nuevosTurnos = reservaTurnoRepository.findByEstadoIn(estadosPendientes);
+            List<String> estadosPendientes = List.of("SOLICITADO", "PENDIENTE", "CONFIRMADO");
+            List<ReservaTurno> nuevosTurnos = reservaTurnoRepository.findByEstadoIn(estadosPendientes);
 
-        if (nuevosTurnos.isEmpty()) {
-            logger.info("no hay turnos pendientes para validar");
-            return;
+            if (nuevosTurnos.isEmpty()) {
+                logger.info("no hay turnos pendientes para validar");
+                return;
+            }
+
+            logger.info("se encontraron {} turnos para validar", nuevosTurnos.size());
+
+            for (ReservaTurno turno : nuevosTurnos) {
+                procesarValidacionesTurno(turno);
+            }
+
+            logger.info("ciclo de revision de turnos completado");
+        } catch (Exception e) {
+            logger.warn("aviso durante el ciclo de revision: {}", e.getMessage());
         }
-
-        logger.info("se encontraron {} turnos para validar", nuevosTurnos.size());
-
-        for (ReservaTurno turno : nuevosTurnos) {
-            procesarValidacionesTurno(turno);
-        }
-
-        logger.info("ciclo de revision de turnos completado");
     }
 
     private void procesarValidacionesTurno(ReservaTurno turno) {
