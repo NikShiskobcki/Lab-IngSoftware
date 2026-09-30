@@ -97,20 +97,22 @@ services:
       mariadb:
         condition: service_healthy
 
-  facturacion:
-    build:
-      context: ./facturacion
-      dockerfile: Dockerfile
-    container_name: facturacion
-    restart: unless-stopped
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/reservas
-      SPRING_DATASOURCE_USERNAME: reservas_app
-      SPRING_DATASOURCE_PASSWORD: admin
-      SPRING_JPA_HIBERNATE_DDL_AUTO: none
-    depends_on:
-      mariadb:
-        condition: service_healthy
+  # facturacion pendiente de implementacion por companeros
+  # facturacion:
+  #   build:
+  #     context: ./facturacion
+  #     dockerfile: Dockerfile
+  #   container_name: facturacion
+  #   restart: unless-stopped
+  #   environment:
+  #     SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/reservas
+  #     SPRING_DATASOURCE_USERNAME: reservas_app
+  #     SPRING_DATASOURCE_PASSWORD: admin
+  #     SPRING_JPA_HIBERNATE_DDL_AUTO: none
+  #   depends_on:
+  #     mariadb:
+  #       condition: service_healthy
+
 
 volumes:
   mariadb_data:
