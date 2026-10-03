@@ -110,9 +110,13 @@ services:
       DB_PASSWORD: admin
       # intervalo entre ejecuciones en milisegundos (300000 = 5 minutos)
       FACTURACION_INTERVALO_MS: 300000
+      # hibernate crea clientes, facturas e items_factura a partir de las entidades JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
     depends_on:
       mariadb:
         condition: service_healthy
+      turno-subscriber:
+        condition: service_started
       turno-validador:
         condition: service_started
 
