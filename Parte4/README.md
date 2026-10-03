@@ -110,7 +110,7 @@ curl → API de Reservas → Mosquitto → Subscriber → MariaDB → **turno-va
 
 ### Servicio `facturacion`
 
-Contenedor independiente del validador (carpeta `facturacion/`, Java 21 + JDBC). Cada 5 minutos:
+Contenedor independiente del validador (carpeta `facturacion/`, Java 21 + Spring Boot + JPA, igual que `turnos-api`). Cada 5 minutos:
 
 1. Busca los turnos en estado `Atendido`.
 2. Por cada turno, en **una única transacción**:
@@ -130,6 +130,8 @@ Configuración por variable de entorno (ver `docker-compose.yml`):
 | `DB_URL` / `DB_USER` / `DB_PASSWORD` | ver compose | Conexión a MariaDB |
 
 ### Tablas nuevas
+
+Se declaran como entidades JPA (`model/Cliente`, `Factura`, `ItemFactura`) y Hibernate las crea al arrancar (`ddl-auto: update`). `personal` y `reservas_turnos` las sigue creando `turno-subscriber`: `facturacion` las mapea solo para leerlas (`model/Personal`, `model/Reserva`) y Hibernate no las modifica.  `items_factura.id_turno` referencia a `reservas_turnos` sin FK física (queda el `UNIQUE`). Si el ciclo corre antes de que existan las tablas base, falla, se registra en el log y se reintenta en el siguiente.
 
 - `clientes` (`email` UNIQUE)
 - `facturas` (una por cliente y mes: UNIQUE `id_cliente, anio, mes`; `total`, `estado`)
