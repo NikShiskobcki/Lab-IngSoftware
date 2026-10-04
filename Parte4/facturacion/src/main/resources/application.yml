@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: facturacion
+  main:
+    # no hay servidor web: mantiene vivo el proceso para el @Scheduled
+    keep-alive: true
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${DB_URL:jdbc:mariadb://mariadb:3306/reservas}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:reservas_app}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:admin}}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      # hibernate crea/completa clientes, facturas e items_factura a partir de las entidades.
+      # personal y reservas_turnos las crea turno-subscriber: se excluyen del ddl (ver SchemaFilterProviderFacturacion)
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    properties:
+      hibernate:
+        hbm2ddl:
+          schema_filter_provider: com.laboratorio.turnos.facturacion.config.SchemaFilterProviderFacturacion
+
+facturacion:
+  # intervalo entre ejecuciones (300000 = 5 minutos) y espera antes de la primera
+  intervalo-ms: ${FACTURACION_INTERVALO_MS:300000}
+  delay-inicial-ms: ${FACTURACION_DELAY_INICIAL_MS:15000}
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{20} - %msg%n"
+  level:
+    root: info

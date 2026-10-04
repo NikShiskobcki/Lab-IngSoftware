@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: turno-validador
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:reservas}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:reservas_app}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:admin}}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:none}
+    show-sql: false
+
+# intervalo de revision cada 1 minuto (60000 ms)
+validador:
+  intervalo-ms: 60000

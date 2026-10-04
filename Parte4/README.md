@@ -101,3 +101,53 @@ docker compose down
 Para eliminar también los datos almacenados:
 
 docker compose down -v
+
+## Parte 4 – Servicio de facturación (US-40, US-41, US-42)
+
+Flujo completo:
+
+curl → API de Reservas → Mosquitto → Subscriber → MariaDB → **turno-validador** (cada 1 min) → **facturacion** (cada 5 min) → MariaDB
+
+### Servicio `facturacion`
+
+Contenedor independiente del validador (carpeta `facturacion/`, Java 21 + Spring Boot + JPA, igual que `turnos-api`). Cada 5 minutos:
+
+1. Busca los turnos en estado `Atendido`.
+2. Por cada turno, en **una única transacción**:
+   - obtiene (o crea) el cliente, identificado por su **email único** (sin distinguir mayúsculas);
+   - obtiene (o crea) la factura de ese cliente para el **mes del turno**;
+   - agrega un ítem con el costo de la consulta y recalcula el total de la factura;
+   - cambia el estado del turno a `Facturado`.
+3. Si algo falla, se revierte todo el turno (queda `Atendido`) y se reintenta en el ciclo siguiente. Un error en un turno no frena a los demás.
+4. Cada ejecución registra en el log la hora de inicio, turnos encontrados, facturados, omitidos y errores.
+
+Configuración por variable de entorno (ver `docker-compose.yml`):
+
+| Variable | Por defecto | Descripción |
+|---|---|---|
+| `FACTURACION_INTERVALO_MS` | `300000` | Intervalo entre ejecuciones (5 min) |
+| `FACTURACION_DELAY_INICIAL_MS` | `15000` | Espera antes de la primera ejecución |
+| `DB_URL` / `DB_USER` / `DB_PASSWORD` | ver compose | Conexión a MariaDB |
+
+### Tablas nuevas
+
+Se declaran como entidades JPA (`model/Cliente`, `Factura`, `ItemFactura`) y Hibernate las crea al arrancar (`ddl-auto: update`). `personal` y `reservas_turnos` las sigue creando `turno-subscriber`: `facturacion` las mapea solo para leerlas (`model/Personal`, `model/Reserva`) y Hibernate no las modifica.  `items_factura.id_turno` referencia a `reservas_turnos` sin FK física (queda el `UNIQUE`). Si el ciclo corre antes de que existan las tablas base, falla, se registra en el log y se reintenta en el siguiente.
+
+- `clientes` (`email` UNIQUE)
+- `facturas` (una por cliente y mes: UNIQUE `id_cliente, anio, mes`; `total`, `estado`)
+- `items_factura` (`id_turno` UNIQUE: un turno no puede facturarse dos veces)
+
+### Scripts de la Parte 4
+
+```
+bash demo-facturacion.sh       # ejemplo completo con curl (tarda varios minutos: espera al validador y a la facturación)
+bash testing-facturacion.sh    # prueba con verificaciones automáticas de la facturación
+bash ver-facturas-db.sh        # muestra clientes, facturas, ítems y turnos por estado
+docker compose logs -f facturacion
+```
+
+Para ver el servicio actuar más rápido durante una prueba, bajar `FACTURACION_INTERVALO_MS` en el compose (por ejemplo `30000`) y reiniciar con `docker compose up -d facturacion`.
+
+### Nota sobre el estado `Atendido`
+
+El paso `Agendado → Atendido` (turno cuya fecha ya pasó) no forma parte del servicio de facturación. Los scripts de prueba lo simulan actualizando el estado directamente en la base de datos.
