@@ -45,18 +45,31 @@ public class TurnoValidadorService {
 
             if (nuevosTurnos.isEmpty()) {
                 logger.info("no hay turnos pendientes para validar");
-                return;
+            }else{
+                logger.info("se encontraron {} turnos para validar", nuevosTurnos.size());
+                for (ReservaTurno turno : nuevosTurnos) {
+                    procesarValidacionesTurno(turno);
+                }
             }
 
-            logger.info("se encontraron {} turnos para validar", nuevosTurnos.size());
-
-            for (ReservaTurno turno : nuevosTurnos) {
-                procesarValidacionesTurno(turno);
-            }
+            marcarTurnosAtendidos();
 
             logger.info("ciclo de revision de turnos completado");
         } catch (Exception e) {
             logger.warn("aviso durante el ciclo de revision: {}", e.getMessage());
+        }
+    }
+
+    private void marcarTurnosAtendidos() {
+        List<String> estadosAgendados = List.of("Agendado");
+        List<ReservaTurno> agendados = reservaTurnoRepository.findByEstadoIn(estadosAgendados);
+
+        for (ReservaTurno turno:agendados){
+            LocalDateTime fechaHoraTurno = LocalDateTime.of(turno.getFechaTurno(),turno.getHoraTurno());
+            if(fechaHoraTurno.isBefore(LocalDateTime.now())){
+                turno.setEstado("Atendido");
+                reservaTurnoRepository.save(turno);
+            }
         }
     }
 
