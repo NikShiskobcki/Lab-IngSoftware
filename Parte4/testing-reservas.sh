@@ -117,6 +117,59 @@ echo "filtrar reservas por personal"
 curl -sS "$BASE_URL/reservas?idPersonal=$ID_PERSONAL" | jq
 
 echo
+echo "actualizar reserva (PUT publica en mosquitto, no toca la base directamente)"
+curl -sS -w "\nHTTP %{http_code}\n" -X PUT "$BASE_URL/reservas/$ID_RESERVA" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"idPersonal\": $ID_PERSONAL,
+    \"emailCliente\": \"$EMAIL\",
+    \"telefonoCliente\": \"099654321\",
+    \"fecha\": \"$FECHA\",
+    \"hora\": \"11:00\"
+  }"
+
+HORA_ACTUAL=""
+for INTENTO in $(seq 1 10); do
+  HORA_ACTUAL=$(curl -sS "$BASE_URL/reservas/$ID_RESERVA" | jq -r '.horaTurno // empty')
+  if [ "${HORA_ACTUAL:0:5}" = "11:00" ]; then
+    break
+  fi
+  sleep 1
+done
+
+echo
+echo "verificar reserva actualizada por el suscriptor"
+curl -sS "$BASE_URL/reservas/$ID_RESERVA" | jq
+if [ "${HORA_ACTUAL:0:5}" != "11:00" ]; then
+  echo "la reserva no fue actualizada"
+  exit 1
+fi
+
+echo
+echo "actualizar reserva inexistente (espera 404)"
+curl -sS -w "\nHTTP %{http_code}\n" -X PUT "$BASE_URL/reservas/999999" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"idPersonal\": $ID_PERSONAL,
+    \"emailCliente\": \"$EMAIL\",
+    \"telefonoCliente\": \"099654321\",
+    \"fecha\": \"$FECHA\",
+    \"hora\": \"11:00\"
+  }"
+
+echo
+echo "actualizar reserva con datos invalidos (espera 400)"
+curl -sS -w "\nHTTP %{http_code}\n" -X PUT "$BASE_URL/reservas/$ID_RESERVA" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"idPersonal\": $ID_PERSONAL,
+    \"emailCliente\": \"correo-invalido\",
+    \"telefonoCliente\": \"\",
+    \"fecha\": \"$FECHA\",
+    \"hora\": \"11:00\"
+  }"
+
+echo
 echo "probar datos invalidos"
 curl -sS -w "\nHTTP %{http_code}\n" \
   -X POST "$BASE_URL/reservas" \

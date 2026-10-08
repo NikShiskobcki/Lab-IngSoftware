@@ -61,6 +61,11 @@ public class TurnoValidator {
       //Valida si la solicitud de turno cumple todas las reglas de negocio.
      
     public ValidationResult validate(TurnoDTO turno, Connection conn) throws SQLException {
+        return validate(turno, conn, null);
+    }
+
+    // idReservaExcluida: en una modificacion (PUT) la reserva no debe chocar consigo misma
+    public ValidationResult validate(TurnoDTO turno, Connection conn, Integer idReservaExcluida) throws SQLException {
         if (turno == null) {
             return ValidationResult.reject("El contenido del turno es nulo.");
         }
@@ -123,15 +128,25 @@ public class TurnoValidator {
         }
 
         // Regla: No podrán existir dos turnos para el mismo profesional en el mismo horario
-        String queryConflicto = """
-            SELECT COUNT(*) FROM reservas_turnos
-            WHERE id_personal = ? AND fecha_turno = ? AND hora_turno = ? AND estado = 'CONFIRMADO'
-        """;
+        // en una modificacion se excluye la propia reserva y se considera cualquier estado,
+        // porque la tabla tiene UNIQUE (id_personal, fecha_turno, hora_turno)
+        String queryConflicto = idReservaExcluida == null
+                ? """
+                    SELECT COUNT(*) FROM reservas_turnos
+                    WHERE id_personal = ? AND fecha_turno = ? AND hora_turno = ? AND estado = 'CONFIRMADO'
+                """
+                : """
+                    SELECT COUNT(*) FROM reservas_turnos
+                    WHERE id_personal = ? AND fecha_turno = ? AND hora_turno = ? AND id <> ?
+                """;
 
         try (PreparedStatement ps = conn.prepareStatement(queryConflicto)) {
             ps.setInt(1, turno.getIdPersonal());
             ps.setDate(2, Date.valueOf(turno.getFecha()));
             ps.setTime(3, Time.valueOf(turno.getHora()));
+            if (idReservaExcluida != null) {
+                ps.setInt(4, idReservaExcluida);
+            }
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next() && rs.getInt(1) > 0) {
                     return ValidationResult.reject(String.format(

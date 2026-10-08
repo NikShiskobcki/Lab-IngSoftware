@@ -75,6 +75,35 @@ paths:
         '404':
           description: Reserva no encontrada
 
+    put:
+      tags:
+        - Reservas
+      summary: Actualizar reserva
+      description: >
+        Publica la modificación en el broker MQTT Mosquitto (evento ACTUALIZAR). No actualiza
+        la base de datos directamente: el suscriptor valida y aplica el cambio, y la reserva
+        vuelve a quedar pendiente para que el servicio validador la reevalúe.
+      operationId: actualizarReserva
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearReservaDTO'
+      responses:
+        '202':
+          description: Modificación enviada a procesamiento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaActualizarReserva'
+        '400':
+          description: Datos inválidos en la solicitud
+        '404':
+          description: Reserva no encontrada
+
     delete:
       tags:
         - Reservas
@@ -419,6 +448,21 @@ components:
         mensaje:
           type: string
           example: Reserva enviada a Mosquitto para ser validada y persistida
+        datos:
+          $ref: '#/components/schemas/CrearReservaDTO'
+
+    RespuestaActualizarReserva:
+      type: object
+      properties:
+        status:
+          type: string
+          example: MODIFICACION_ENVIADA
+        mensaje:
+          type: string
+          example: Modificación de la reserva 1 enviada a Mosquitto para ser validada y persistida
+        id:
+          type: integer
+          example: 1
         datos:
           $ref: '#/components/schemas/CrearReservaDTO'
 

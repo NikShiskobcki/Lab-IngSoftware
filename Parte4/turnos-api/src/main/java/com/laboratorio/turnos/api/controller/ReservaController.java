@@ -79,6 +79,27 @@ public class ReservaController {
                 });
     }
 
+    // actualizar reserva: publica el evento en mqtt, la base la modifica el suscriptor
+    @PutMapping("/{id}")
+    @Operation(summary = "actualizar reserva", description = "envia la modificacion a mosquitto para que el suscriptor valide y actualice la reserva")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "modificacion enviada a procesamiento"),
+            @ApiResponse(responseCode = "400", description = "datos invalidos"),
+            @ApiResponse(responseCode = "404", description = "reserva no encontrada")
+    })
+    public ResponseEntity<Map<String, Object>> actualizarReserva(@PathVariable Integer id,
+                                                                 @Valid @RequestBody CrearReservaDTO dto) {
+        reservaService.actualizarReserva(id, dto);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "MODIFICACION_ENVIADA");
+        response.put("mensaje", "modificacion de la reserva " + id + " enviada a mosquitto para ser validada y persistida");
+        response.put("id", id);
+        response.put("datos", dto);
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+    }
+
     // eliminar reserva por id
     @DeleteMapping("/{id}")
     @Operation(summary = "eliminar reserva", description = "elimina una reserva por su id")

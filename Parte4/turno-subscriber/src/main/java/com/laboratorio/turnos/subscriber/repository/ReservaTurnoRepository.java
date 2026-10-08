@@ -54,4 +54,30 @@ public class ReservaTurnoRepository {
             }
         }
     }
+
+    // Modifica una reserva existente y la devuelve a CONFIRMADO (pendiente) para que
+    // turno-validador la vuelva a evaluar.
+    // Retorna true si se actualizo una fila.
+    public boolean updateReserva(int id, TurnoDTO turno, Connection conn) throws SQLException {
+        String sql = """
+            UPDATE reservas_turnos
+            SET id_personal = ?, email_solicitante = ?, telefono_solicitante = ?,
+                fecha_turno = ?, hora_turno = ?, estado = 'CONFIRMADO'
+            WHERE id = ?
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, turno.getIdPersonal());
+            ps.setString(2, turno.getEmailCliente());
+            ps.setString(3, turno.getTelefonoCliente());
+            ps.setDate(4, Date.valueOf(turno.getFecha()));
+            ps.setTime(5, Time.valueOf(turno.getHora()));
+            ps.setInt(6, id);
+            boolean actualizada = ps.executeUpdate() > 0;
+            if (actualizada) {
+                logger.info("Reserva ID_BD={} actualizada exitosamente", id);
+            }
+            return actualizada;
+        }
+    }
 }

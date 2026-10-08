@@ -87,6 +87,12 @@ public class TurnoMqttSubscriber implements MqttCallbackExtended, AutoCloseable 
                 return;
             }
 
+            // Modificación de una reserva existente (PUT /reservas/{id})
+            if ("ACTUALIZAR".equalsIgnoreCase(mensajeDTO.getStatus())) {
+                procesarActualizacion(turno);
+                return;
+            }
+
             // Validar y persistir usando conexión a MariaDB
             try (Connection conn = databaseManager.getConnection()) {
                 TurnoValidator.ValidationResult result = validator.validate(turno, conn);
@@ -107,6 +113,29 @@ public class TurnoMqttSubscriber implements MqttCallbackExtended, AutoCloseable 
 
         } catch (Exception e) {
             logger.error("Error al procesar el mensaje MQTT: {}", e.getMessage(), e);
+        }
+    }
+
+    private void procesarActualizacion(TurnoDTO turno) throws Exception {
+        if (turno.getId() == null) {
+            logger.warn("[DESCARTADO] Evento ACTUALIZAR sin id de reserva.");
+            return;
+        }
+
+        try (Connection conn = databaseManager.getConnection()) {
+            TurnoValidator.ValidationResult result = validator.validate(turno, conn, turno.getId());
+
+            if (!result.isValid()) {
+                logger.warn("✗ [ACTUALIZACION RECHAZADA] Reserva ID_BD={}: {}", turno.getId(), result.getReason());
+                return;
+            }
+
+            if (repository.updateReserva(turno.getId(), turno, conn)) {
+                logger.info("✓ [ACTUALIZADA] Reserva ID_BD={} para '{}'. Nueva fecha: {}, hora: {}. Queda pendiente de revalidación.",
+                        turno.getId(), result.getNombreProfesional(), turno.getFecha(), turno.getHora());
+            } else {
+                logger.warn("✗ [ACTUALIZACION RECHAZADA] Reserva ID_BD={} no existe.", turno.getId());
+            }
         }
     }
 

@@ -1,12 +1,18 @@
 package com.laboratorio.turnos.api.dto.mqtt;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 // dto del turno para el payload mqtt
 public class MqttTurnoDTO {
+
+    // solo se envia en las actualizaciones (PUT), identifica la reserva a modificar
+    @JsonProperty("id")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer id;
 
     @JsonProperty("idPersonal")
     private Integer idPersonal;
@@ -34,6 +40,9 @@ public class MqttTurnoDTO {
         this.fecha = fecha;
         this.hora = hora;
     }
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public Integer getIdPersonal() { return idPersonal; }
     public void setIdPersonal(Integer idPersonal) { this.idPersonal = idPersonal; }

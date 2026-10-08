@@ -3,6 +3,7 @@ package com.laboratorio.turnos.api.service;
 import com.laboratorio.turnos.api.dto.CrearReservaDTO;
 import com.laboratorio.turnos.api.dto.mqtt.MqttReservaMessageDTO;
 import com.laboratorio.turnos.api.dto.mqtt.MqttTurnoDTO;
+import com.laboratorio.turnos.api.exception.ResourceNotFoundException;
 import com.laboratorio.turnos.api.model.Reserva;
 import com.laboratorio.turnos.api.repository.ReservaRepository;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,30 @@ public class ReservaService {
 
         MqttReservaMessageDTO mensajeDTO = new MqttReservaMessageDTO(
                 "NUEVO",
+                LocalDateTime.now(),
+                turnoDTO
+        );
+
+        mqttPublisherService.publicarReserva(mensajeDTO);
+    }
+
+    // publica la modificacion en mqtt, no toca la base de datos: el suscriptor valida y actualiza
+    public void actualizarReserva(Integer id, CrearReservaDTO dto) {
+        if (!reservaRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Reserva con id " + id + " no encontrada");
+        }
+
+        MqttTurnoDTO turnoDTO = new MqttTurnoDTO(
+                dto.getIdPersonal(),
+                dto.getEmailCliente(),
+                dto.getTelefonoCliente(),
+                dto.getFecha(),
+                dto.getHora()
+        );
+        turnoDTO.setId(id);
+
+        MqttReservaMessageDTO mensajeDTO = new MqttReservaMessageDTO(
+                "ACTUALIZAR",
                 LocalDateTime.now(),
                 turnoDTO
         );
