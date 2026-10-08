@@ -50,4 +50,9 @@ public class SchemaFilterProviderFacturacion implements SchemaFilterProvider {
     public SchemaFilter getValidateFilter() {
         return FILTRO;
     }
+    
+    @Override
+    public SchemaFilter getTruncatorFilter(){
+            return FILTRO;
+    }
 }
