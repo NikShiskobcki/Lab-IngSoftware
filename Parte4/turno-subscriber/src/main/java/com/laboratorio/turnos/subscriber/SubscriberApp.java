@@ -6,29 +6,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
- // Punto de entrada principal para el suscriptor de Turnos.
+// Punto de entrada principal para el suscriptor de Turnos.
 
 public class SubscriberApp {
 
     private static final Logger logger = LoggerFactory.getLogger(SubscriberApp.class);
 
     public static void main(String[] args) {
-        logger.info("=== Iniciando Consumidor y Persistencia de Turnos (MQTT Subscriber) ===");
+        logger.info("Iniciando consumidor de eventos MQTT");
 
         String brokerUrl = getEnv("MQTT_BROKER_URL", "tcp://mosquitto:1883");
         String topic = getEnv("MQTT_TOPIC", "turnos/reservas");
-        String dbUrl = getEnv("DB_URL", "jdbc:mariadb://mariadb:3306/reservas");
-        String dbUser = getEnv("DB_USER", "reservas_app");
-        String dbPassword = getEnv("DB_PASSWORD", "admin");
 
-        logger.info("Configuración: Broker={}, Tópico={}, DB_URL={}", brokerUrl, topic, dbUrl);
+        logger.info("Configuracion: Broker={}, Topico={}", brokerUrl, topic);
 
-        // 1. Inicializar y verificar conexión con MariaDB
-        DatabaseManager databaseManager = new DatabaseManager(dbUrl, dbUser, dbPassword);
-        databaseManager.waitAndInitialize();
-
-        // 2. Iniciar el suscriptor MQTT
-        TurnoMqttSubscriber subscriber = new TurnoMqttSubscriber(brokerUrl, topic, databaseManager);
+        TurnoMqttSubscriber subscriber = new TurnoMqttSubscriber(brokerUrl, topic);
 
         boolean connected = false;
         while (!connected) {
@@ -50,7 +42,6 @@ public class SubscriberApp {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Deteniendo Subscriber...");
             subscriber.close();
-            databaseManager.close();
             logger.info("Subscriber detenido correctamente.");
         }));
 

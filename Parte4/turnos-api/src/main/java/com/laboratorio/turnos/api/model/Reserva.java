@@ -35,8 +35,11 @@ public class Reserva {
     @Column(name = "fecha_registro", nullable = false)
     private LocalDateTime fechaRegistro;
 
-    @Column(name = "estado", nullable = false, length = 30)
-    private String estado = "CONFIRMADO";
+    @Column(name = "estado", nullable = false, length = 50)
+    private String estado = "SOLICITADO";
+
+    @Column(name = "id_establecimiento")
+    private Integer idEstablecimiento;
 
     public Reserva() {}
 
@@ -66,4 +69,8 @@ public class Reserva {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    public Integer getIdEstablecimiento() {return idEstablecimiento;}
+
+    public void setIdEstablecimiento(Integer idEstablecimiento) {this.idEstablecimiento = idEstablecimiento;}
 }

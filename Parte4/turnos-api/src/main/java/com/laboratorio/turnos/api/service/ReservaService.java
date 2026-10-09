@@ -24,15 +24,31 @@ public class ReservaService {
         this.mqttPublisherService = mqttPublisherService;
     }
 
-    // publica en mqtt para que el suscriptor valide y persista
-    public void generarReserva(CrearReservaDTO dto) {
+    // regitra la reserva y luego la envia a mosquito para validaciones
+    public Reserva generarReserva(CrearReservaDTO dto) {
+        Reserva reserva = new Reserva();
+        reserva.setIdPersonal(dto.getIdPersonal());
+        reserva.setIdEstablecimiento(dto.getIdEstablecimiento());
+        reserva.setEmailSolicitante(dto.getEmailCliente());
+        reserva.setTelefonoSolicitante(dto.getTelefonoCliente());
+        reserva.setFechaTurno(dto.getFecha());
+        reserva.setHoraTurno(dto.getHora());
+        reserva.setDuracionMinutos(30);
+        reserva.setFechaRegistro(LocalDateTime.now());
+        reserva.setEstado("SOLICITADO");
+
+        Reserva reservaGuardada = reservaRepository.save(reserva);
+
         MqttTurnoDTO turnoDTO = new MqttTurnoDTO(
                 dto.getIdPersonal(),
+                dto.getIdEstablecimiento(),
                 dto.getEmailCliente(),
                 dto.getTelefonoCliente(),
                 dto.getFecha(),
                 dto.getHora()
         );
+
+        turnoDTO.setId(reservaGuardada.getId());
 
         MqttReservaMessageDTO mensajeDTO = new MqttReservaMessageDTO(
                 "NUEVO",
@@ -41,22 +57,45 @@ public class ReservaService {
         );
 
         mqttPublisherService.publicarReserva(mensajeDTO);
+
+        return reservaGuardada;
     }
 
     // publica la modificacion en mqtt, no toca la base de datos: el suscriptor valida y actualiza
-    public void actualizarReserva(Integer id, CrearReservaDTO dto) {
-        if (!reservaRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Reserva con id " + id + " no encontrada");
+    public Reserva actualizarReserva(Integer id, CrearReservaDTO dto) {
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Reserva con id " + id + " no encontrada"
+                        )
+                );
+        if ("Atendido".equalsIgnoreCase(reserva.getEstado())
+                || "Facturado".equalsIgnoreCase(reserva.getEstado())) {
+            throw new IllegalArgumentException(
+                    "No se puede modificar una reserva atendida o facturada"
+            );
         }
+
+        reserva.setIdPersonal(dto.getIdPersonal());
+        reserva.setIdEstablecimiento(dto.getIdEstablecimiento());
+        reserva.setEmailSolicitante(dto.getEmailCliente());
+        reserva.setTelefonoSolicitante(dto.getTelefonoCliente());
+        reserva.setFechaTurno(dto.getFecha());
+        reserva.setHoraTurno(dto.getHora());
+        reserva.setEstado("SOLICITADO");
+
+        Reserva reservaActualizada = reservaRepository.save(reserva);
 
         MqttTurnoDTO turnoDTO = new MqttTurnoDTO(
                 dto.getIdPersonal(),
+                dto.getIdEstablecimiento(),
                 dto.getEmailCliente(),
                 dto.getTelefonoCliente(),
                 dto.getFecha(),
                 dto.getHora()
         );
-        turnoDTO.setId(id);
+
+        turnoDTO.setId(reservaActualizada.getId());
 
         MqttReservaMessageDTO mensajeDTO = new MqttReservaMessageDTO(
                 "ACTUALIZAR",
@@ -65,12 +104,14 @@ public class ReservaService {
         );
 
         mqttPublisherService.publicarReserva(mensajeDTO);
+
+        return reservaActualizada;
     }
 
     // consulta todas las reservas o filtra por idPersonal
     public List<Reserva> listarTodas(Optional<Integer> idPersonal) {
         return idPersonal.map(reservaRepository::findByIdPersonal)
-                         .orElseGet(reservaRepository::findAll);
+                .orElseGet(reservaRepository::findAll);
     }
 
     // consulta una reserva por su id
@@ -80,10 +121,22 @@ public class ReservaService {
 
     // elimina la reserva por su id
     public boolean eliminarReserva(Integer id) {
-        if (reservaRepository.existsById(id)) {
-            reservaRepository.deleteById(id);
-            return true;
+        Optional<Reserva> resultado = reservaRepository.findById(id);
+
+        if (resultado.isEmpty()) {
+            return false;
         }
-        return false;
+
+        Reserva reserva = resultado.get();
+
+        if ("Atendido".equalsIgnoreCase(reserva.getEstado())
+                || "Facturado".equalsIgnoreCase(reserva.getEstado())) {
+            throw new IllegalArgumentException(
+                    "No se puede eliminar una reserva atendida o facturada"
+            );
+        }
+
+        reservaRepository.delete(reserva);
+        return true;
     }
 }

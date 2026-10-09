@@ -3,6 +3,7 @@ package com.laboratorio.turnos.api.dto.mqtt;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -16,6 +17,9 @@ public class MqttTurnoDTO {
 
     @JsonProperty("idPersonal")
     private Integer idPersonal;
+
+    @JsonProperty("idEstablecimiento")
+    private Integer idEstablecimiento;
 
     @JsonProperty("email_cliente")
     private String emailCliente;
@@ -31,31 +35,78 @@ public class MqttTurnoDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
     private LocalTime hora;
 
-    public MqttTurnoDTO() {}
+    public MqttTurnoDTO() {
+    }
 
-    public MqttTurnoDTO(Integer idPersonal, String emailCliente, String telefonoCliente, LocalDate fecha, LocalTime hora) {
+    public MqttTurnoDTO(
+            Integer idPersonal,
+            Integer idEstablecimiento,
+            String emailCliente,
+            String telefonoCliente,
+            LocalDate fecha,
+            LocalTime hora
+    ) {
         this.idPersonal = idPersonal;
+        this.idEstablecimiento = idEstablecimiento;
         this.emailCliente = emailCliente;
         this.telefonoCliente = telefonoCliente;
         this.fecha = fecha;
         this.hora = hora;
     }
 
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public Integer getId() {
+        return id;
+    }
 
-    public Integer getIdPersonal() { return idPersonal; }
-    public void setIdPersonal(Integer idPersonal) { this.idPersonal = idPersonal; }
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
-    public String getEmailCliente() { return emailCliente; }
-    public void setEmailCliente(String emailCliente) { this.emailCliente = emailCliente; }
+    public Integer getIdPersonal() {
+        return idPersonal;
+    }
 
-    public String getTelefonoCliente() { return telefonoCliente; }
-    public void setTelefonoCliente(String telefonoCliente) { this.telefonoCliente = telefonoCliente; }
+    public void setIdPersonal(Integer idPersonal) {
+        this.idPersonal = idPersonal;
+    }
 
-    public LocalDate getFecha() { return fecha; }
-    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
+    public String getEmailCliente() {
+        return emailCliente;
+    }
 
-    public LocalTime getHora() { return hora; }
-    public void setHora(LocalTime hora) { this.hora = hora; }
+    public void setEmailCliente(String emailCliente) {
+        this.emailCliente = emailCliente;
+    }
+
+    public String getTelefonoCliente() {
+        return telefonoCliente;
+    }
+
+    public void setTelefonoCliente(String telefonoCliente) {
+        this.telefonoCliente = telefonoCliente;
+    }
+
+    public LocalDate getFecha() {
+        return fecha;
+    }
+
+    public void setFecha(LocalDate fecha) {
+        this.fecha = fecha;
+    }
+
+    public LocalTime getHora() {
+        return hora;
+    }
+
+    public void setHora(LocalTime hora) {
+        this.hora = hora;
+    }
+
+    public Integer getIdEstablecimiento() {
+        return idEstablecimiento;
+    }
+
+    public void setIdEstablecimiento(Integer idEstablecimiento) {
+        this.idEstablecimiento = idEstablecimiento;
+    }
 }

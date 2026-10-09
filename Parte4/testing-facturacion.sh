@@ -1,90 +1,159 @@
 #!/bin/bash
-# prueba del servicio de facturacion (us-40, us-41, us-42)
-#
-# inserta turnos en estado "Atendido" directamente en la base (la api no permite crear turnos en el
-# pasado) y espera a que el servicio de facturacion, que corre cada 5 minutos, los facture.
-#
-# uso:   bash testing-facturacion.sh
-# vars:  MAX_WAIT   segundos maximos de espera (por defecto 420)
-#        DB_CMD     comando para ejecutar sql (por defecto docker exec en reservas-db)
+# pruebas de agrupacion de facturas
 
-DB_CMD=${DB_CMD:-"docker exec -i reservas-db mariadb -u reservas_app -padmin reservas"}
-MAX_WAIT=${MAX_WAIT:-420}
+set -e
+BASE_URL="http://localhost:8080"
+FECHA=$(date -u -d "+2 days" +%F)
+EMAIL="facturacion.$(date +%s).$$@correo.com"
+ARCHIVO=$(mktemp)
+trap 'rm -f "$ARCHIVO"' EXIT
 
-sql() { $DB_CMD -N -B -e "$1"; }
-FALLOS=0
-
-check() {
-  # check "descripcion" esperado obtenido
-  if [ "$2" == "$3" ]; then
-    echo "  [OK]    $1 (= $3)"
-  else
-    echo "  [FALLA] $1: esperado '$2', obtenido '$3'"
-    FALLOS=$((FALLOS+1))
-  fi
+# mostrar la respuesta y el codigo HTTP
+peticion() {
+  HTTP=$(curl -sS --connect-timeout 5 --max-time 20 \
+    -o "$ARCHIVO" -w '%{http_code}' "$@")
+  jq . "$ARCHIVO"
+  echo "HTTP $HTTP"
+  echo
 }
 
-EMAIL="Cliente.Fact.$(date +%s)@Test.com"     # con mayusculas: el cliente se identifica por email normalizado
-EMAIL_N=$(echo "$EMAIL" | tr 'A-Z' 'a-z')
-DIA=$((RANDOM % 25 + 1))
-HORA=$((RANDOM % 9 + 8))
+# esperar la revision que se ejecuta cada minuto
+esperar() {
+  ID=$1
+  ESPERADO=$2
 
-echo "=== 1. insertar turnos de prueba para $EMAIL_N ==="
-# dos turnos atendidos en septiembre 2026 (personal 1 cuesta 1500 y personal 2 cuesta 800)
-# y uno en agosto 2026 (personal 1) -> deben generar dos facturas distintas
-sql "INSERT INTO reservas_turnos (id_personal, email_solicitante, telefono_solicitante, fecha_turno, hora_turno, duracion_minutos, fecha_registro, estado) VALUES
- (1, '$EMAIL', '099111222', '2026-09-$(printf '%02d' $DIA)', '$(printf '%02d' $HORA):00:00', 30, NOW(), 'Atendido'),
- (2, '$EMAIL', '099111222', '2026-09-$(printf '%02d' $DIA)', '$(printf '%02d' $HORA):30:00', 30, NOW(), 'Atendido'),
- (1, '$EMAIL', '099111222', '2026-08-$(printf '%02d' $DIA)', '$(printf '%02d' $HORA):00:00', 30, NOW(), 'Atendido');"
-# turnos de control: no deben ser tocados por la facturacion
-sql "INSERT INTO reservas_turnos (id_personal, email_solicitante, telefono_solicitante, fecha_turno, hora_turno, duracion_minutos, fecha_registro, estado) VALUES
- (1, '$EMAIL', '099111222', '2027-03-$(printf '%02d' $DIA)', '$(printf '%02d' $HORA):00:00', 30, NOW(), 'Agendado'),
- (1, '$EMAIL', '099111222', '2027-04-$(printf '%02d' $DIA)', '$(printf '%02d' $HORA):00:00', 30, NOW(), 'Rechazado/Turno Ocupado');"
+  for INTENTO in {1..84}; do
+    ESTADO=$(curl -sS --connect-timeout 5 --max-time 20 \
+      "$BASE_URL/reservas/$ID" | jq -er '.estado')
 
-echo ""
-echo "=== turnos del cliente antes de facturar ==="
-$DB_CMD -e "SELECT id, id_personal, fecha_turno, hora_turno, estado FROM reservas_turnos WHERE email_solicitante = '$EMAIL' ORDER BY id;"
+    if [ "$ESTADO" = "$ESPERADO" ]; then
+      peticion "$BASE_URL/reservas/$ID"
+      return
+    fi
+    sleep 5
+  done
 
-echo "=== 2. esperando a que el servicio de facturacion procese (maximo ${MAX_WAIT}s) ==="
-INICIO=$(date +%s)
-while true; do
-  PENDIENTES=$(sql "SELECT COUNT(*) FROM reservas_turnos WHERE email_solicitante = '$EMAIL' AND estado = 'Atendido';")
-  [ "$PENDIENTES" == "0" ] && break
-  if [ $(( $(date +%s) - INICIO )) -ge "$MAX_WAIT" ]; then
-    echo "  tiempo agotado: quedan $PENDIENTES turnos en estado Atendido. el contenedor 'facturacion' esta corriendo?"
-    break
-  fi
-  echo "  quedan $PENDIENTES turnos Atendido, reintentando en 10s..."
-  sleep 10
-done
+  echo "la reserva $ID no llego al estado $ESPERADO"
+  exit 1
+}
 
-echo ""
-echo "=== 3. resultado en la base de datos ==="
-echo "--- turnos ---"
-$DB_CMD -e "SELECT id, id_personal, fecha_turno, hora_turno, estado FROM reservas_turnos WHERE email_solicitante = '$EMAIL' ORDER BY id;"
-echo "--- facturas ---"
-$DB_CMD -e "SELECT f.id, c.email, f.anio, f.mes, f.total, f.estado FROM facturas f JOIN clientes c ON c.id = f.id_cliente WHERE c.email = '$EMAIL_N' ORDER BY f.anio, f.mes;"
-echo "--- items ---"
-$DB_CMD -e "SELECT i.id, i.id_factura, i.id_turno, i.monto, i.descripcion FROM items_factura i JOIN facturas f ON f.id = i.id_factura JOIN clientes c ON c.id = f.id_cliente WHERE c.email = '$EMAIL_N' ORDER BY i.id;"
+# enviar una solicitud con los datos de la prueba
+reservar() {
+  peticion -X POST "$BASE_URL/reservas" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"idPersonal\": $ID_PERSONAL,
+      \"idEstablecimiento\": $1,
+      \"emailCliente\": \"$2\",
+      \"telefonoCliente\": \"099123456\",
+      \"fecha\": \"$3\",
+      \"hora\": \"$4\"
+    }"
+  [ "$HTTP" = "201" ] || exit 1
+}
 
-echo ""
-echo "=== 4. verificaciones ==="
-check "turnos Facturado"                       3    "$(sql "SELECT COUNT(*) FROM reservas_turnos WHERE email_solicitante = '$EMAIL' AND estado = 'Facturado';")"
-check "turnos Atendido restantes"              0    "$(sql "SELECT COUNT(*) FROM reservas_turnos WHERE email_solicitante = '$EMAIL' AND estado = 'Atendido';")"
-check "turno Agendado no fue tocado"           1    "$(sql "SELECT COUNT(*) FROM reservas_turnos WHERE email_solicitante = '$EMAIL' AND estado = 'Agendado';")"
-check "turno Rechazado no fue tocado"          1    "$(sql "SELECT COUNT(*) FROM reservas_turnos WHERE email_solicitante = '$EMAIL' AND estado = 'Rechazado/Turno Ocupado';")"
-check "un unico cliente para el email"         1    "$(sql "SELECT COUNT(*) FROM clientes WHERE email = '$EMAIL_N';")"
-check "dos facturas (agosto y septiembre)"     2    "$(sql "SELECT COUNT(*) FROM facturas f JOIN clientes c ON c.id = f.id_cliente WHERE c.email = '$EMAIL_N';")"
-check "total factura septiembre (1500 + 800)"  2300.00 "$(sql "SELECT f.total FROM facturas f JOIN clientes c ON c.id = f.id_cliente WHERE c.email = '$EMAIL_N' AND f.anio = 2026 AND f.mes = 9;")"
-check "total factura agosto"                   1500.00 "$(sql "SELECT f.total FROM facturas f JOIN clientes c ON c.id = f.id_cliente WHERE c.email = '$EMAIL_N' AND f.anio = 2026 AND f.mes = 8;")"
-check "items de factura generados"             3    "$(sql "SELECT COUNT(*) FROM items_factura i JOIN facturas f ON f.id = i.id_factura JOIN clientes c ON c.id = f.id_cliente WHERE c.email = '$EMAIL_N';")"
-check "total = suma de items (todas las facturas)" 0 "$(sql "SELECT COUNT(*) FROM facturas f WHERE f.total <> (SELECT COALESCE(SUM(monto),0) FROM items_factura WHERE id_factura = f.id);")"
-check "ningun turno tiene mas de un item"      0    "$(sql "SELECT COUNT(*) FROM (SELECT id_turno FROM items_factura GROUP BY id_turno HAVING COUNT(*) > 1) t;")"
+echo "crear establecimiento"
+peticion -X POST "$BASE_URL/establecimientos" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombreComercial": "TaPronto Facturacion",
+    "direccion": "Calle Pruebas 123",
+    "telefono": "29001234",
+    "correoElectronico": "pruebas@tapronto.com",
+    "horarioApertura": "08:00",
+    "horarioCierre": "18:00"
+  }'
+[ "$HTTP" = "201" ] || exit 1
+ID_ESTABLECIMIENTO=$(jq -er '.id' "$ARCHIVO")
 
-echo ""
-if [ "$FALLOS" -eq 0 ]; then
-  echo "RESULTADO: todas las verificaciones pasaron"
-else
-  echo "RESULTADO: $FALLOS verificacion(es) fallaron"
+echo "crear personal"
+peticion -X POST "$BASE_URL/personal" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"idEstablecimiento\": $ID_ESTABLECIMIENTO,
+    \"nombre\": \"Maria Facturacion\",
+    \"especialidad\": \"Consulta\",
+    \"costoConsulta\": 1500,
+    \"duracionEstandarMinutos\": 30,
+    \"estado\": \"ACTIVO\"
+  }"
+[ "$HTTP" = "201" ] || exit 1
+ID_PERSONAL=$(jq -er '.id' "$ARCHIVO")
+
+echo "crear primer turno del cliente"
+reservar "$ID_ESTABLECIMIENTO" "$EMAIL" "$FECHA" "10:00"
+ID_PRIMERO=$(jq -er '.datos.id' "$ARCHIVO")
+
+echo "crear segundo turno del mismo cliente"
+reservar "$ID_ESTABLECIMIENTO" "$EMAIL" "$FECHA" "11:00"
+ID_SEGUNDO=$(jq -er '.datos.id' "$ARCHIVO")
+
+echo "crear tercer turno del mismo cliente"
+reservar "$ID_ESTABLECIMIENTO" "$EMAIL" "$FECHA" "12:00"
+ID_TERCERO=$(jq -er '.datos.id' "$ARCHIVO")
+
+echo "esperar que se agenden los tres turnos"
+esperar "$ID_PRIMERO" "Agendado"
+esperar "$ID_SEGUNDO" "Agendado"
+esperar "$ID_TERCERO" "Agendado"
+
+echo "simular dos turnos del mismo mes y otro del mes anterior"
+# Cambiar solo la fecha para simular que los turnos ya sucedieron.
+docker exec -i reservas-db mariadb -u reservas_app -padmin reservas -e "
+SET @fecha = DATE_SUB(UTC_DATE(), INTERVAL 1 DAY);
+UPDATE reservas_turnos
+SET fecha_turno = @fecha
+WHERE id IN ($ID_PRIMERO, $ID_SEGUNDO) AND estado = 'Agendado';
+UPDATE reservas_turnos
+SET fecha_turno = DATE_SUB(DATE_FORMAT(@fecha, '%Y-%m-01'), INTERVAL 1 MONTH)
+WHERE id = $ID_TERCERO AND estado = 'Agendado';
+"
+
+echo "esperar validacion y facturacion; puede demorar hasta seis minutos"
+esperar "$ID_PRIMERO" "Facturado"
+esperar "$ID_SEGUNDO" "Facturado"
+esperar "$ID_TERCERO" "Facturado"
+
+echo "ver facturas e items persistidos"
+docker exec -i reservas-db mariadb -u reservas_app -padmin reservas -e "
+SELECT c.email, f.id AS factura, f.anio, f.mes, f.total,
+       COUNT(i.id) AS cantidad_items, SUM(i.monto) AS suma_items
+FROM clientes c
+JOIN facturas f ON f.id_cliente = c.id
+JOIN items_factura i ON i.id_factura = f.id
+WHERE c.email = '$EMAIL'
+GROUP BY c.email, f.id, f.anio, f.mes, f.total
+ORDER BY f.anio DESC, f.mes DESC\\G
+SELECT id_turno, id_factura, monto
+FROM items_factura
+WHERE id_turno IN ($ID_PRIMERO, $ID_SEGUNDO, $ID_TERCERO)
+ORDER BY id_turno\\G
+"
+
+echo "verificar agrupacion y total del mismo mes"
+RESULTADO=$(docker exec reservas-db mariadb -u reservas_app -padmin reservas -N -B -e "
+SELECT CONCAT(COUNT(DISTINCT f.id), '|', COUNT(i.id), '|', MAX(f.total))
+FROM facturas f
+JOIN items_factura i ON i.id_factura = f.id
+WHERE i.id_turno IN ($ID_PRIMERO, $ID_SEGUNDO);
+")
+if [ "$RESULTADO" != "1|2|3000.00" ]; then
+  echo "no coincide: $RESULTADO; se esperaba 1|2|3000.00"
   exit 1
 fi
+echo "correcto: una factura, dos items y total 3000"
+
+echo "verificar que el otro mes tenga su propia factura"
+RESULTADO=$(docker exec reservas-db mariadb -u reservas_app -padmin reservas -N -B -e "
+SELECT CONCAT(COUNT(DISTINCT f.id), '|', COUNT(DISTINCT c.id), '|', COUNT(i.id), '|', SUM(i.monto))
+FROM clientes c
+JOIN facturas f ON f.id_cliente = c.id
+JOIN items_factura i ON i.id_factura = f.id
+WHERE c.email = '$EMAIL';
+")
+if [ "$RESULTADO" != "2|1|3|4500.00" ]; then
+  echo "no coincide: $RESULTADO; se esperaba 2|1|3|4500.00"
+  exit 1
+fi
+echo "correcto: dos facturas, un cliente y tres items por un total de 4500"
+echo "pruebas terminadas; los datos quedan guardados"

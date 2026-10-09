@@ -17,6 +17,10 @@ public class CrearReservaDTO {
     @NotNull(message = "el idPersonal es obligatorio")
     private Integer idPersonal;
 
+    @Schema(description = "id del establecimiento seleccionado", example = "1")
+    @NotNull(message = "el idEstablecimiento es obligatorio")
+    private Integer idEstablecimiento;
+
     @Schema(description = "correo del cliente", example = "cliente@correo.com")
     @NotBlank(message = "el email no puede estar vacio")
     @Email(message = "el email debe tener un formato valido")
@@ -52,4 +56,12 @@ public class CrearReservaDTO {
 
     public LocalTime getHora() { return hora; }
     public void setHora(LocalTime hora) { this.hora = hora; }
+
+    public Integer getIdEstablecimiento() {
+        return idEstablecimiento;
+    }
+
+    public void setIdEstablecimiento(Integer idEstablecimiento) {
+        this.idEstablecimiento = idEstablecimiento;
+    }
 }

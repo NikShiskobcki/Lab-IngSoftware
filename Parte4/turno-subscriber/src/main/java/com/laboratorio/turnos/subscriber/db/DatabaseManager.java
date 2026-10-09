@@ -11,7 +11,7 @@ import java.sql.Statement;
 
 
 // Administrador de conexiones y ciclo de vida del esquema de base de datos MariaDB.
- 
+
 public class DatabaseManager implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseManager.class);
@@ -26,16 +26,16 @@ public class DatabaseManager implements AutoCloseable {
         this.password = password;
     }
 
-    
+
     //Obtiene una nueva conexión a MariaDB.
-    
+
     public Connection getConnection() throws SQLException {
         return DriverManager.getConnection(url, user, password);
     }
 
-    
+
     //Espera e inicializa la base de datos
-    
+
     public void waitAndInitialize() {
         boolean ready = false;
         int retries = 0;
@@ -70,54 +70,68 @@ public class DatabaseManager implements AutoCloseable {
 
             // Tabla 1: Establecimientos
             stmt.executeUpdate("""
-                CREATE TABLE IF NOT EXISTS establecimientos (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    nombre_comercial VARCHAR(150) NOT NULL,
-                    direccion VARCHAR(255) NOT NULL,
-                    telefono VARCHAR(50) NOT NULL,
-                    correo_electronico VARCHAR(100) NOT NULL,
-                    horario_apertura TIME NOT NULL,
-                    horario_cierre TIME NOT NULL
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-            """);
+                        CREATE TABLE IF NOT EXISTS establecimientos (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            nombre_comercial VARCHAR(150) NOT NULL,
+                            direccion VARCHAR(255) NOT NULL,
+                            telefono VARCHAR(50) NOT NULL,
+                            correo_electronico VARCHAR(100) NOT NULL,
+                            horario_apertura TIME NOT NULL,
+                            horario_cierre TIME NOT NULL
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                    """);
 
             // Tabla 2: Personal
             stmt.executeUpdate("""
-                CREATE TABLE IF NOT EXISTS personal (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    id_establecimiento INT NOT NULL,
-                    nombre VARCHAR(150) NOT NULL,
-                    especialidad VARCHAR(100) NOT NULL,
-                    costo_consulta DECIMAL(10,2) NOT NULL,
-                    duracion_estandar_minutos INT NOT NULL DEFAULT 30,
-                    estado ENUM('ACTIVO', 'INACTIVO') NOT NULL DEFAULT 'ACTIVO',
-                    INDEX idx_personal_est (id_establecimiento),
-                    CONSTRAINT fk_personal_establecimiento
-                        FOREIGN KEY (id_establecimiento) REFERENCES establecimientos(id)
-                        ON DELETE CASCADE
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-            """);
+                        CREATE TABLE IF NOT EXISTS personal (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            id_establecimiento INT NOT NULL,
+                            nombre VARCHAR(150) NOT NULL,
+                            especialidad VARCHAR(100) NOT NULL,
+                            costo_consulta DECIMAL(10,2) NOT NULL,
+                            duracion_estandar_minutos INT NOT NULL DEFAULT 30,
+                            estado ENUM('ACTIVO', 'INACTIVO') NOT NULL DEFAULT 'ACTIVO',
+                            INDEX idx_personal_est (id_establecimiento),
+                            CONSTRAINT fk_personal_establecimiento
+                                FOREIGN KEY (id_establecimiento) REFERENCES establecimientos(id)
+                                ON DELETE CASCADE
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                    """);
 
             // Tabla 3: Reservas de Turnos
             stmt.executeUpdate("""
-                CREATE TABLE IF NOT EXISTS reservas_turnos (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    id_personal INT NOT NULL,
-                    email_solicitante VARCHAR(100) NOT NULL,
-                    telefono_solicitante VARCHAR(50) NOT NULL,
-                    fecha_turno DATE NOT NULL,
-                    hora_turno TIME NOT NULL,
-                    duracion_minutos INT NOT NULL DEFAULT 30,
-                    fecha_registro DATETIME NOT NULL,
-                    estado VARCHAR(30) NOT NULL DEFAULT 'CONFIRMADO',
-                    INDEX idx_reserva_personal (id_personal),
-                    CONSTRAINT fk_reserva_personal
-                        FOREIGN KEY (id_personal) REFERENCES personal(id)
-                        ON DELETE RESTRICT,
-                    CONSTRAINT uq_personal_fecha_hora
-                        UNIQUE KEY (id_personal, fecha_turno, hora_turno)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-            """);
+                                CREATE TABLE IF NOT EXISTS reservas_turnos (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            id_personal INT NOT NULL,
+                            id_establecimiento INT NULL,
+                            email_solicitante VARCHAR(100) NOT NULL,
+                            telefono_solicitante VARCHAR(50) NOT NULL,
+                            fecha_turno DATE NOT NULL,
+                            hora_turno TIME NOT NULL,
+                            duracion_minutos INT NOT NULL DEFAULT 30,
+                            fecha_registro DATETIME NOT NULL,
+                            estado VARCHAR(50) NOT NULL DEFAULT 'SOLICITADO',
+                            INDEX idx_reserva_personal (id_personal),
+                            CONSTRAINT fk_reserva_personal
+                                FOREIGN KEY (id_personal) REFERENCES personal(id)
+                                ON DELETE RESTRICT
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                    """);
+
+            stmt.executeUpdate("""
+                        ALTER TABLE reservas_turnos
+                        ADD COLUMN IF NOT EXISTS id_establecimiento INT NULL;
+                    """);
+
+            stmt.executeUpdate("""
+                        ALTER TABLE reservas_turnos
+                        MODIFY COLUMN estado VARCHAR(50) NOT NULL DEFAULT 'SOLICITADO';
+                    """);
+
+            stmt.executeUpdate("""
+                        ALTER TABLE reservas_turnos
+                        DROP INDEX IF EXISTS uq_personal_fecha_hora;
+                    """);
 
             logger.info("Esquema de base de datos verificado y listo.");
         }
@@ -131,22 +145,22 @@ public class DatabaseManager implements AutoCloseable {
 
                 // Establecimientos iniciales
                 stmt.executeUpdate("""
-                    INSERT INTO establecimientos (id, nombre_comercial, direccion, telefono, correo_electronico, horario_apertura, horario_cierre)
-                    VALUES
-                    (1, 'Centro de Estética & Barbería Central', 'Av. 18 de Julio 1420', '099112233', 'contacto@barberiacentral.uy', '08:00:00', '19:00:00'),
-                    (2, 'Taller Mecánico & Servicios Rápidos', 'Bvar. Artigas 3250', '098445566', 'info@tallerapido.uy', '09:00:00', '18:00:00');
-                """);
+                            INSERT INTO establecimientos (id, nombre_comercial, direccion, telefono, correo_electronico, horario_apertura, horario_cierre)
+                            VALUES
+                            (1, 'Centro de Estética & Barbería Central', 'Av. 18 de Julio 1420', '099112233', 'contacto@barberiacentral.uy', '08:00:00', '19:00:00'),
+                            (2, 'Taller Mecánico & Servicios Rápidos', 'Bvar. Artigas 3250', '098445566', 'info@tallerapido.uy', '09:00:00', '18:00:00');
+                        """);
 
                 // Personal inicial (incluyendo activos, un inactivo para pruebas de reglas de negocio)
                 stmt.executeUpdate("""
-                    INSERT INTO personal (id, id_establecimiento, nombre, especialidad, costo_consulta, duracion_estandar_minutos, estado)
-                    VALUES
-                    (1, 1, 'Dra. Sofía Martínez', 'Estética Facial', 1500.00, 30, 'ACTIVO'),
-                    (2, 1, 'Carlos Gómez', 'Barbero / Estilista', 800.00, 30, 'ACTIVO'),
-                    (3, 2, 'Martín Rodríguez', 'Mecánica General', 2200.00, 30, 'ACTIVO'),
-                    (4, 1, 'Lucía Fernández', 'Cosmetología', 1200.00, 30, 'INACTIVO'),
-                    (8, 1, 'Juan Pérez', 'Peluquería', 900.00, 30, 'ACTIVO');
-                """);
+                            INSERT INTO personal (id, id_establecimiento, nombre, especialidad, costo_consulta, duracion_estandar_minutos, estado)
+                            VALUES
+                            (1, 1, 'Dra. Sofía Martínez', 'Estética Facial', 1500.00, 30, 'ACTIVO'),
+                            (2, 1, 'Carlos Gómez', 'Barbero / Estilista', 800.00, 30, 'ACTIVO'),
+                            (3, 2, 'Martín Rodríguez', 'Mecánica General', 2200.00, 30, 'ACTIVO'),
+                            (4, 1, 'Lucía Fernández', 'Cosmetología', 1200.00, 30, 'INACTIVO'),
+                            (8, 1, 'Juan Pérez', 'Peluquería', 900.00, 30, 'ACTIVO');
+                        """);
 
                 logger.info("Datos iniciales de establecimientos y personal insertados exitosamente.");
             } else {

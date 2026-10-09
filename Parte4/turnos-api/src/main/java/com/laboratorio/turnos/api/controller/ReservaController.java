@@ -32,18 +32,21 @@ public class ReservaController {
 
     // generar reserva enviando evento a mqtt
     @PostMapping
-    @Operation(summary = "generar nueva reserva", description = "envia la reserva a mosquitto para que el suscriptor valide y guarde")
+    @Operation(
+            summary = "generar nueva reserva",
+            description = "registra la reserva como SOLICITADO y publica un evento MQTT"
+    )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "solicitud enviada a procesamiento"),
+            @ApiResponse(responseCode = "201", description = "reserva registrada y evento publicado"),
             @ApiResponse(responseCode = "400", description = "datos invalidos")
     })
     public ResponseEntity<Map<String, Object>> generarReserva(@Valid @RequestBody CrearReservaDTO dto) {
-        reservaService.generarReserva(dto);
+        Reserva reserva = reservaService.generarReserva(dto);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "SOLICITUD_ENVIADA");
-        response.put("mensaje", "reserva enviada a mosquitto para ser validada y persistida");
-        response.put("datos", dto);
+        response.put("status", "SOLICITADO");
+        response.put("mensaje", "reserva registrada y evento MQTT publicado");
+        response.put("datos", reserva);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -81,21 +84,25 @@ public class ReservaController {
 
     // actualizar reserva: publica el evento en mqtt, la base la modifica el suscriptor
     @PutMapping("/{id}")
-    @Operation(summary = "actualizar reserva", description = "envia la modificacion a mosquitto para que el suscriptor valide y actualice la reserva")
+    @Operation(
+            summary = "actualizar reserva",
+            description = "actualiza la reserva, restablece su estado a SOLICITADO y publica un evento MQTT"
+    )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "202", description = "modificacion enviada a procesamiento"),
+            @ApiResponse(responseCode = "202", description = "reserva actualizada y enviada a validación"),
             @ApiResponse(responseCode = "400", description = "datos invalidos"),
             @ApiResponse(responseCode = "404", description = "reserva no encontrada")
     })
-    public ResponseEntity<Map<String, Object>> actualizarReserva(@PathVariable Integer id,
-                                                                 @Valid @RequestBody CrearReservaDTO dto) {
-        reservaService.actualizarReserva(id, dto);
+    public ResponseEntity<Map<String, Object>> actualizarReserva(
+            @PathVariable Integer id,
+            @Valid @RequestBody CrearReservaDTO dto
+    ) {
+        Reserva reserva = reservaService.actualizarReserva(id, dto);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "MODIFICACION_ENVIADA");
-        response.put("mensaje", "modificacion de la reserva " + id + " enviada a mosquitto para ser validada y persistida");
-        response.put("id", id);
-        response.put("datos", dto);
+        response.put("status", "SOLICITADO");
+        response.put("mensaje", "reserva actualizada y evento MQTT publicado");
+        response.put("datos", reserva);
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }

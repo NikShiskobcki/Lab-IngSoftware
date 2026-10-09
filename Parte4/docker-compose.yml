@@ -1,4 +1,5 @@
 services:
+  # Broker para los eventos de reservas y turnos atendidos
   mosquitto:
     image: eclipse-mosquitto:2
     container_name: mosquitto
@@ -8,7 +9,7 @@ services:
     command: >
       sh -c "echo 'listener 1883' > /mosquitto/config/mosquitto.conf && echo 'allow_anonymous true' >> /mosquitto/config/mosquitto.conf && mosquitto -c /mosquitto/config/mosquitto.conf"
 
-  #Base de datos MariaDB
+  # Base de datos MariaDB
   mariadb:
     image: mariadb:11
     container_name: reservas-db
@@ -26,7 +27,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # generador automatico desactivado para usar la api rest
+  # Generador automatico desactivado para usar la API REST
   # turno-publisher:
   #   build:
   #     context: ./turno-publisher
@@ -40,7 +41,7 @@ services:
   #   depends_on:
   #     - mosquitto
 
-  #Turno subscibe y persist
+  # Subscriber: recibe y muestra los eventos MQTT de reservas
   turno-subscriber:
     build:
       context: ./turno-subscriber
@@ -50,16 +51,11 @@ services:
     environment:
       MQTT_BROKER_URL: tcp://mosquitto:1883
       MQTT_TOPIC: turnos/reservas
-      DB_URL: jdbc:mariadb://mariadb:3306/reservas
-      DB_USER: reservas_app
-      DB_PASSWORD: admin
     depends_on:
-      mariadb:
-        condition: service_healthy
       mosquitto:
         condition: service_started
 
-  #api
+  # API: registra las solicitudes y publica los eventos MQTT
   turnos-api:
     build:
       context: ./turnos-api
@@ -72,7 +68,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/reservas
       SPRING_DATASOURCE_USERNAME: reservas_app
       SPRING_DATASOURCE_PASSWORD: admin
-      #para que hibernate no toque el esquema
+      # Para que Hibernate no toque el esquema
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       MQTT_BROKER_URL: tcp://mosquitto:1883
       MQTT_TOPIC: turnos/reservas
@@ -81,7 +77,13 @@ services:
         condition: service_healthy
       mosquitto:
         condition: service_started
+      # Espera a que el inicializador termine de preparar las tablas
+      turno-validador:
+        condition: service_healthy
 
+  # Validador: prepara el esquema y recibe solicitudes por MQTT
+  # Cada minuto valida los pendientes y actualiza los estados
+  # Al pasar un turno a Atendido publica en turnos/atendidos
   turno-validador:
     build:
       context: ./turno-validador
@@ -93,11 +95,23 @@ services:
       SPRING_DATASOURCE_USERNAME: reservas_app
       SPRING_DATASOURCE_PASSWORD: admin
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_TOPIC: turnos/reservas
+    # El archivo se crea cuando termina DatabaseInitializer
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/esquema-listo"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     depends_on:
       mariadb:
         condition: service_healthy
+      mosquitto:
+        condition: service_started
 
-  # servicio asincrono de facturacion: corre cada 5 minutos (us-40, us-41, us-42)
+  # Facturacion: recibe eventos de turnos atendidos por MQTT
+  # Cada 5 minutos agrega los pendientes a la factura mensual
   facturacion:
     build:
       context: ./facturacion
@@ -108,17 +122,29 @@ services:
       DB_URL: jdbc:mariadb://mariadb:3306/reservas
       DB_USER: reservas_app
       DB_PASSWORD: admin
-      # intervalo entre ejecuciones en milisegundos (300000 = 5 minutos)
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      # Intervalo entre ejecuciones (300000 ms = 5 minutos)
       FACTURACION_INTERVALO_MS: 300000
-      # hibernate crea clientes, facturas e items_factura a partir de las entidades JPA
+      # Hibernate crea clientes, facturas e items_factura
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
     depends_on:
       mariadb:
         condition: service_healthy
-      turno-subscriber:
+      mosquitto:
         condition: service_started
+      # Espera a que las tablas de reservas y personal esten listas
       turno-validador:
-        condition: service_started
+        condition: service_healthy
+
+  # Visualizar la base de datos desde el navegador
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      mariadb:
+        condition: service_healthy
 
 volumes:
   mariadb_data:

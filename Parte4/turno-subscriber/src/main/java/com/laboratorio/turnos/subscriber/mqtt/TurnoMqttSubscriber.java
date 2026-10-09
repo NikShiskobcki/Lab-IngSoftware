@@ -2,18 +2,13 @@ package com.laboratorio.turnos.subscriber.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.laboratorio.turnos.subscriber.db.DatabaseManager;
-import com.laboratorio.turnos.subscriber.model.ReservaMessageDTO;
-import com.laboratorio.turnos.subscriber.model.TurnoDTO;
-import com.laboratorio.turnos.subscriber.repository.ReservaTurnoRepository;
-import com.laboratorio.turnos.subscriber.service.TurnoValidator;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
+
 
 
 public class TurnoMqttSubscriber implements MqttCallbackExtended, AutoCloseable {
@@ -23,19 +18,13 @@ public class TurnoMqttSubscriber implements MqttCallbackExtended, AutoCloseable 
     private final String brokerUrl;
     private final String topic;
     private final String clientId;
-    private final DatabaseManager databaseManager;
-    private final TurnoValidator validator;
-    private final ReservaTurnoRepository repository;
     private final ObjectMapper objectMapper;
     private MqttClient mqttClient;
 
-    public TurnoMqttSubscriber(String brokerUrl, String topic, DatabaseManager databaseManager) {
+    public TurnoMqttSubscriber(String brokerUrl, String topic) {
         this.brokerUrl = brokerUrl;
         this.topic = topic;
-        this.databaseManager = databaseManager;
         this.clientId = "TurnoSubscriber-" + System.currentTimeMillis();
-        this.validator = new TurnoValidator();
-        this.repository = new ReservaTurnoRepository();
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
     }
@@ -74,70 +63,36 @@ public class TurnoMqttSubscriber implements MqttCallbackExtended, AutoCloseable 
 
     @Override
     public void messageArrived(String topic, MqttMessage message) {
-        String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
-        logger.info("--> [EVENTO RECIBIDO] Tópico: {}, Tamaño: {} bytes", topic, payload.length());
-        logger.debug("Payload JSON: {}", payload);
+        String payload = new String(
+                message.getPayload(),
+                StandardCharsets.UTF_8
+        );
 
         try {
-            ReservaMessageDTO mensajeDTO = objectMapper.readValue(payload, ReservaMessageDTO.class);
-            TurnoDTO turno = mensajeDTO.getTurno();
+            var evento = objectMapper.readTree(payload);
+            var turno = evento.get("turno");
 
-            if (turno == null) {
-                logger.warn("[DESCARTADO] El mensaje recibido no contiene la estructura del turno.");
+            if (turno == null || !turno.hasNonNull("id")) {
+                logger.warn("Evento recibido sin id de reserva.");
                 return;
             }
 
-            // Modificación de una reserva existente (PUT /reservas/{id})
-            if ("ACTUALIZAR".equalsIgnoreCase(mensajeDTO.getStatus())) {
-                procesarActualizacion(turno);
-                return;
-            }
+            String tipo = evento.path("status").asText();
+            int idReserva = turno.get("id").asInt();
 
-            // Validar y persistir usando conexión a MariaDB
-            try (Connection conn = databaseManager.getConnection()) {
-                TurnoValidator.ValidationResult result = validator.validate(turno, conn);
-
-                if (result.isValid()) {
-                    int idGenerado = repository.saveReserva(turno, mensajeDTO.getFechaHora(), conn);
-                    logger.info("✓ [APROBADO & GUARDADO] Reserva ID_BD={} para '{}' en '{}'. Fecha: {}, Hora: {}, Cliente: <{}>",
-                            idGenerado,
-                            result.getNombreProfesional(),
-                            result.getNombreEstablecimiento(),
-                            turno.getFecha(),
-                            turno.getHora(),
-                            turno.getEmailCliente());
-                } else {
-                    logger.warn("✗ [RECHAZADO] {}", result.getReason());
-                }
-            }
+            logger.info(
+                    "Evento MQTT recibido: tipo={}, reserva={}, establecimiento={}, personal={}",
+                    tipo,
+                    idReserva,
+                    turno.path("idEstablecimiento").asInt(),
+                    turno.path("idPersonal").asInt()
+            );
 
         } catch (Exception e) {
-            logger.error("Error al procesar el mensaje MQTT: {}", e.getMessage(), e);
+            logger.error("Error al leer el evento MQTT", e);
         }
     }
 
-    private void procesarActualizacion(TurnoDTO turno) throws Exception {
-        if (turno.getId() == null) {
-            logger.warn("[DESCARTADO] Evento ACTUALIZAR sin id de reserva.");
-            return;
-        }
-
-        try (Connection conn = databaseManager.getConnection()) {
-            TurnoValidator.ValidationResult result = validator.validate(turno, conn, turno.getId());
-
-            if (!result.isValid()) {
-                logger.warn("✗ [ACTUALIZACION RECHAZADA] Reserva ID_BD={}: {}", turno.getId(), result.getReason());
-                return;
-            }
-
-            if (repository.updateReserva(turno.getId(), turno, conn)) {
-                logger.info("✓ [ACTUALIZADA] Reserva ID_BD={} para '{}'. Nueva fecha: {}, hora: {}. Queda pendiente de revalidación.",
-                        turno.getId(), result.getNombreProfesional(), turno.getFecha(), turno.getHora());
-            } else {
-                logger.warn("✗ [ACTUALIZACION RECHAZADA] Reserva ID_BD={} no existe.", turno.getId());
-            }
-        }
-    }
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
