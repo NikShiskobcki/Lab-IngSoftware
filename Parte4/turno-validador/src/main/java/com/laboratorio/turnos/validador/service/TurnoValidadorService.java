@@ -188,22 +188,37 @@ public class TurnoValidadorService {
         }
 
         // us-38: verificar horario disponible
-        List<ReservaTurno> coincidentes = reservaTurnoRepository.findByIdPersonalAndFechaTurnoAndHoraTurno(
-                turno.getIdPersonal(),
+        List<ReservaTurno> turnosDelDia =
+                reservaTurnoRepository.findByIdPersonalAndFechaTurno(
+                        turno.getIdPersonal(),
+                        turno.getFechaTurno()
+                );
+
+        LocalDateTime inicioNuevo = LocalDateTime.of(
                 turno.getFechaTurno(),
                 turno.getHoraTurno()
         );
+        LocalDateTime finNuevo =
+                inicioNuevo.plusMinutes(turno.getDuracionMinutos());
 
-        boolean horarioOcupado = coincidentes.stream()
+        boolean horarioOcupado = turnosDelDia.stream()
                 .filter(otro -> !otro.getId().equals(turno.getId()))
+                .filter(otro ->
+                        "Agendado".equalsIgnoreCase(otro.getEstado())
+                                || "Atendido".equalsIgnoreCase(otro.getEstado())
+                                || "Facturado".equalsIgnoreCase(otro.getEstado())
+                )
                 .anyMatch(otro -> {
-                    String est = otro.getEstado();
-                    if (est == null) return false;
-                    return est.equalsIgnoreCase("Agendado")
-                            || est.equalsIgnoreCase("Atendido")
-                            || est.equalsIgnoreCase("Facturado");
-                });
+                    LocalDateTime inicioOtro = LocalDateTime.of(
+                            otro.getFechaTurno(),
+                            otro.getHoraTurno()
+                    );
+                    LocalDateTime finOtro =
+                            inicioOtro.plusMinutes(otro.getDuracionMinutos());
 
+                    return inicioNuevo.isBefore(finOtro)
+                            && inicioOtro.isBefore(finNuevo);
+                });
         if (horarioOcupado) {
             logger.warn("turno id={} rechazado: horario ocupado", turno.getId());
             turno.setEstado("Rechazado/Turno Ocupado");

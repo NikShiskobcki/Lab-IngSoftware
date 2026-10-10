@@ -17,4 +17,10 @@ public interface ReservaTurnoRepository extends JpaRepository<ReservaTurno, Inte
 
     // buscar turnos para el mismo profesional, fecha y hora
     List<ReservaTurno> findByIdPersonalAndFechaTurnoAndHoraTurno(Integer idPersonal, LocalDate fechaTurno, LocalTime horaTurno);
+
+    List<ReservaTurno> findByIdPersonalAndFechaTurno(
+            Integer idPersonal,
+            LocalDate fechaTurno
+    );
+
 }
