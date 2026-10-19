@@ -1,0 +1,151 @@
+TaPronto - Ejemplo completo en Postman
+
+Antes de comenzar
+
+Levantar el sistema desde la carpeta Parte4:
+docker compose up -d --build
+
+Comprobar que ambos servicios esten suscritos antes de crear reservas:
+docker logs --tail 30 turno-validador
+docker logs --tail 30 facturacion
+
+Los mensajes esperados son:
+Validador suscrito a turnos/reservas
+Facturacion suscrita a turnos/atendidos
+
+En las peticiones POST de Postman seleccionar Body > raw > JSON.
+Las peticiones GET no llevan body.
+
+1. Crear establecimiento
+
+POST http://localhost:8080/establecimientos
+
+{
+  "nombreComercial": "TaPronto Defensa",
+  "direccion": "Calle Principal 123",
+  "telefono": "29001234",
+  "correoElectronico": "defensa@tapronto.com",
+  "horarioApertura": "08:00",
+  "horarioCierre": "18:00"
+}
+
+Resultado esperado: HTTP 201.
+Anotar el id devuelto. En los ejemplos siguientes, reemplazar 4 por ese id.
+
+2. Consultar establecimiento
+
+GET http://localhost:8080/establecimientos/4
+
+Resultado esperado: HTTP 200.
+
+3. Crear personal
+
+POST http://localhost:8080/personal
+
+{
+  "idEstablecimiento": 4,
+  "nombre": "Maria Defensa",
+  "especialidad": "Consulta",
+  "costoConsulta": 1500,
+  "duracionEstandarMinutos": 30,
+  "estado": "ACTIVO"
+}
+
+Resultado esperado: HTTP 201.
+Anotar el id devuelto. En los ejemplos siguientes, reemplazar 10 por ese id.
+
+4. Consultar personal
+
+GET http://localhost:8080/personal/10
+
+Resultado esperado: HTTP 200.
+
+5. Crear reserva
+
+POST http://localhost:8080/reservas
+
+{
+  "idEstablecimiento": 4,
+  "idPersonal": 10,
+  "emailCliente": "cliente.defensa@correo.com",
+  "telefonoCliente": "099123456",
+  "fecha": "2026-10-20",
+  "hora": "10:00"
+}
+
+Elegir una fecha futura y reemplazar los ids por los creados.
+Resultado esperado: HTTP 201 y estado SOLICITADO.
+Anotar datos.id: es el id de la reserva.
+
+6. Consultar reserva
+
+Reemplazar ID_RESERVA por el numero obtenido:
+GET http://localhost:8080/reservas/ID_RESERVA
+
+Resultado esperado: HTTP 200.
+El validador ejecuta cada minuto. Repetir la consulta hasta ver Agendado.
+
+7. Consultar agenda
+
+GET http://localhost:8080/personal/10/agenda?fecha=2026-10-20
+
+Reemplazar el id y la fecha por los usados en la reserva.
+Resultado esperado: HTTP 200 y el turno en la agenda.
+
+8. Simular el paso del tiempo
+
+Esperar a que la reserva este Agendado antes de ejecutar este comando.
+Se cambia solo la fecha del turno de prueba, sin modificar su estado.
+Esto permite mostrar la atencion sin esperar hasta el dia reservado.
+
+Desde Git Bash o PowerShell, reemplazar ID_RESERVA por el numero:
+
+docker exec -i reservas-db mariadb -u reservas_app -padmin reservas -e "UPDATE reservas_turnos SET fecha_turno = DATE_SUB(UTC_DATE(), INTERVAL 1 DAY) WHERE id = ID_RESERVA AND estado = 'Agendado';"
+
+9. Consultar atencion y facturacion
+
+GET http://localhost:8080/reservas/ID_RESERVA
+
+El validador cambia el estado a Atendido en su proximo ciclo de un minuto
+y publica el evento MQTT para facturacion.
+
+Facturacion procesa su cola cada cinco minutos y cambia el estado a Facturado.
+Resultado esperado de las consultas: HTTP 200.
+Si ya aparece Facturado, el turno paso previamente por Atendido.
+
+10. Visualizar datos persistidos
+
+Desde Git Bash, ubicado en Parte4:
+
+bash ver-turnos-db.sh
+bash ver-facturas-db.sh
+
+Debe verse la reserva Facturado, el cliente asociado a su email,
+la factura del mes del turno y un item con monto 1500.
+Los comandos de base de datos no devuelven codigos HTTP.
+
+11. Mostrar agrupacion mensual
+
+Crear dos reservas para el mismo personal, con el mismo email y la misma
+fecha futura, usando horas distintas: 10:00 y 10:30.
+Usar un email nuevo para distinguir esta prueba de las anteriores.
+
+Esperar a que ambas esten Agendado y ejecutar la simulacion de fecha para
+cada id. Esperar a que ambas esten Facturado.
+
+Ejecutar bash ver-facturas-db.sh.
+Resultado esperado: un cliente, una factura mensual, dos items de 1500
+y un total de 3000 para ese email.
+
+Si se vuelve a usar un email que ya tenia turnos facturados ese mes,
+los nuevos items se agregan a la factura existente y el total sera mayor.
+
+Ejemplo mediante curl
+
+La demostracion con Postman sirve para explicar el flujo en la defensa.
+La letra tambien pide un ejemplo mediante curl. Desde Git Bash en Parte4:
+
+bash demo-completo.sh
+
+Ese script imprime los JSON y codigos HTTP, demuestra los cambios de estado
+y muestra la reserva, el cliente, la factura y el item en la base.

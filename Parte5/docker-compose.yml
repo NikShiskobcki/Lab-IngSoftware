@@ -1,0 +1,150 @@
+services:
+  # Broker para los eventos de reservas y turnos atendidos
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    restart: always
+    ports:
+      - "1883:1883"
+    command: >
+      sh -c "echo 'listener 1883' > /mosquitto/config/mosquitto.conf && echo 'allow_anonymous true' >> /mosquitto/config/mosquitto.conf && mosquitto -c /mosquitto/config/mosquitto.conf"
+
+  # Base de datos MariaDB
+  mariadb:
+    image: mariadb:11
+    container_name: reservas-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: reservas
+      MYSQL_USER: reservas_app
+      MYSQL_PASSWORD: admin
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Generador automatico desactivado para usar la API REST
+  # turno-publisher:
+  #   build:
+  #     context: ./turno-publisher
+  #     dockerfile: Dockerfile
+  #   container_name: turno-publish
+  #   restart: unless-stopped
+  #   environment:
+  #     MQTT_BROKER_URL: tcp://mosquitto:1883
+  #     MQTT_TOPIC: turnos/reservas
+  #     PUBLISH_INTERVAL_MS: 10000
+  #   depends_on:
+  #     - mosquitto
+
+  # Subscriber: recibe y muestra los eventos MQTT de reservas
+  turno-subscriber:
+    build:
+      context: ./turno-subscriber
+      dockerfile: Dockerfile
+    container_name: turno-subscriber
+    restart: unless-stopped
+    environment:
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_TOPIC: turnos/reservas
+    depends_on:
+      mosquitto:
+        condition: service_started
+
+  # API: registra las solicitudes y publica los eventos MQTT
+  turnos-api:
+    build:
+      context: ./turnos-api
+      dockerfile: Dockerfile
+    container_name: turnos-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/reservas
+      SPRING_DATASOURCE_USERNAME: reservas_app
+      SPRING_DATASOURCE_PASSWORD: admin
+      # Para que Hibernate no toque el esquema
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_TOPIC: turnos/reservas
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+      # Espera a que el inicializador termine de preparar las tablas
+      turno-validador:
+        condition: service_healthy
+
+  # Validador: prepara el esquema y recibe solicitudes por MQTT
+  # Cada minuto valida los pendientes y actualiza los estados
+  # Al pasar un turno a Atendido publica en turnos/atendidos
+  turno-validador:
+    build:
+      context: ./turno-validador
+      dockerfile: Dockerfile
+    container_name: turno-validador
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/reservas
+      SPRING_DATASOURCE_USERNAME: reservas_app
+      SPRING_DATASOURCE_PASSWORD: admin
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_TOPIC: turnos/reservas
+    # El archivo se crea cuando termina DatabaseInitializer
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/esquema-listo"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+
+  # Facturacion: recibe eventos de turnos atendidos por MQTT
+  # Cada 5 minutos agrega los pendientes a la factura mensual
+  facturacion:
+    build:
+      context: ./facturacion
+      dockerfile: Dockerfile
+    container_name: facturacion
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:mariadb://mariadb:3306/reservas
+      DB_USER: reservas_app
+      DB_PASSWORD: admin
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      # Intervalo entre ejecuciones (300000 ms = 5 minutos)
+      FACTURACION_INTERVALO_MS: 300000
+      # Hibernate crea clientes, facturas e items_factura
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+      # Espera a que las tablas de reservas y personal esten listas
+      turno-validador:
+        condition: service_healthy
+
+  # Visualizar la base de datos desde el navegador
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+volumes:
+  mariadb_data:
