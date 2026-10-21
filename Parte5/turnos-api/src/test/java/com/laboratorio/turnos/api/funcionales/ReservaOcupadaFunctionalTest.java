@@ -6,6 +6,7 @@ import com.laboratorio.turnos.api.model.Reserva;
 import com.laboratorio.turnos.api.personal.EstadoPersonal;
 import com.laboratorio.turnos.api.personal.Personal;
 import com.laboratorio.turnos.api.personal.PersonalConsultaService;
+import com.laboratorio.turnos.api.personal.PersonalRepository;
 import com.laboratorio.turnos.api.personal.dto.DisponibilidadResponse;
 import com.laboratorio.turnos.api.repository.ReservaRepository;
 import org.junit.jupiter.api.BeforeEach;
