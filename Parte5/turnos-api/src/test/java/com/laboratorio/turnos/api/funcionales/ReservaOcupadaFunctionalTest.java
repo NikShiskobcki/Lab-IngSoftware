@@ -1,4 +1,4 @@
-﻿package com.laboratorio.turnos.api.funcionales;
+package com.laboratorio.turnos.api.funcionales;
 
 import com.laboratorio.turnos.api.establecimiento.Establecimiento;
 import com.laboratorio.turnos.api.establecimiento.EstablecimientoRepository;

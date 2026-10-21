@@ -1,4 +1,4 @@
-﻿package com.laboratorio.turnos.validador.service;
+package com.laboratorio.turnos.validador.service;
 
 import com.laboratorio.turnos.validador.model.ReservaTurno;
 import org.junit.jupiter.api.DisplayName;

@@ -1,4 +1,4 @@
-﻿package com.laboratorio.turnos.api.funcionales;
+package com.laboratorio.turnos.api.funcionales;
 
 import com.laboratorio.turnos.api.controller.ReservaController;
 import com.laboratorio.turnos.api.establecimiento.Establecimiento;
