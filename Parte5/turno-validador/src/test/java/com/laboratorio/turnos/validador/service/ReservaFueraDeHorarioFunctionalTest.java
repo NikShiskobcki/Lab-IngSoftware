@@ -25,7 +25,7 @@ public class ReservaFueraDeHorarioFunctionalTest extends TurnoValidadorTestBase 
     // ---------- CP-US65-04: AVL - Fecha y Hora Futura Válida ----------
     @Test
     @DisplayName("CP-US65-04 | AVL: Reserva en fecha y hora estrictamente futura -> Agendado")
-    void reservaFutura_esValidaYSeAgenda() {
+    void reservaFutura() {
         LocalDate futuro = LocalDate.now().plusDays(2);
         LocalTime horaValida = LocalTime.of(10, 30);
 

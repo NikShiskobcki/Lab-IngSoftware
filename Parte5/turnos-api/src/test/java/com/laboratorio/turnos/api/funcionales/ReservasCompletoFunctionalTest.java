@@ -74,7 +74,7 @@ public class ReservasCompletoFunctionalTest {
     // ---------- CP-US59-01: Generar Reserva Válida (201 Created + Evento MQTT) ----------
     @Test
     @DisplayName("CP-US59-01 | Generar reserva válida retorna HTTP 201 Created y estado SOLICITADO")
-    void generarReserva_valida_retorna201YPublicaMqtt() {
+    void generarReserva() {
         CrearReservaDTO dto = crearDTO(1, 1, "cliente@tapronto.com", LocalTime.of(10, 0));
 
         ResponseEntity<Map<String, Object>> respuesta = controller.generarReserva(dto);
@@ -98,7 +98,7 @@ public class ReservasCompletoFunctionalTest {
     // ---------- CP-US59-02: Consultar Reserva por ID Existente ----------
     @Test
     @DisplayName("CP-US59-02 | Consultar reserva por ID existente retorna HTTP 200 OK con datos")
-    void consultarReserva_idExistente_retorna200() {
+    void consultarReservaExistente() {
         Reserva r = new Reserva();
         r.setId(77);
         r.setEstado("Agendado");
@@ -114,7 +114,7 @@ public class ReservasCompletoFunctionalTest {
     // ---------- CP-US59-03: Consultar Reserva por ID Inexistente ----------
     @Test
     @DisplayName("CP-US59-03 | Consultar reserva por ID inexistente retorna HTTP 404 Not Found")
-    void consultarReserva_idInexistente_retorna404() {
+    void consultarReservaInexistente() {
         when(reservaRepository.findById(999)).thenReturn(Optional.empty());
 
         ResponseEntity<?> respuesta = controller.buscarPorId(999);
@@ -125,7 +125,7 @@ public class ReservasCompletoFunctionalTest {
     // ---------- CP-US59-04: Listado General y con Filtro ----------
     @Test
     @DisplayName("CP-US59-04 | Listar reservas permite consulta global y filtrado por profesional")
-    void listarReservas_generalYFiltro_retornaColeccion() {
+    void listarReservasGeneralYFiltro() {
         Reserva r1 = new Reserva();
         r1.setId(1);
         r1.setIdPersonal(1);
@@ -149,7 +149,7 @@ public class ReservasCompletoFunctionalTest {
     // ---------- CP-US59-05: Modificar Reserva Existente (202 Accepted + Reenvío a Validación) ----------
     @Test
     @DisplayName("CP-US59-05 | Actualizar reserva existente retorna HTTP 202 Accepted y re-publica evento ACTUALIZAR")
-    void actualizarReserva_existente_retorna202() {
+    void actualizarReserva() {
         Reserva previa = new Reserva();
         previa.setId(77);
         previa.setEstado("Agendado");
@@ -170,7 +170,7 @@ public class ReservasCompletoFunctionalTest {
     // ---------- CP-US59-06: Modificar Reserva Inexistente ----------
     @Test
     @DisplayName("CP-US59-06 | Actualizar reserva inexistente lanza ResourceNotFoundException (404)")
-    void actualizarReserva_inexistente_lanza404() {
+    void actualizarReservaInexistente() {
         when(reservaRepository.findById(999)).thenReturn(Optional.empty());
         CrearReservaDTO dto = crearDTO(1, 1, "test@correo.com", LocalTime.of(10, 0));
 

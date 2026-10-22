@@ -25,7 +25,7 @@ public class ReservaPersonalInexistenteFunctionalTest extends TurnoValidadorTest
     // ---------- CP-US63-01: Profesional Inexistente en la Base de Datos (PE: ID Inexistente) ----------
     @Test
     @DisplayName("CP-US63-01 | PE: Reserva con idPersonal inexistente -> Estado pasa a 'Rechazado/Solicitud No Valida'")
-    void reservaPersonalInexistente_cambiaAEstadoRechazadoSolicitudNoValida() {
+    void reservaPersonalInexistente() {
         ReservaTurno t = turno(401, futuro(), LocalTime.of(11, 0), "SOLICITADO");
         t.setIdPersonal(9999);
 

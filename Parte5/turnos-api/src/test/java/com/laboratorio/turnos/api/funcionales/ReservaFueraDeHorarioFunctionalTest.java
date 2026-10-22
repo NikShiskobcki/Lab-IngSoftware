@@ -65,7 +65,7 @@ public class ReservaFueraDeHorarioFunctionalTest {
 
     @Test
     @DisplayName("CP-US65-API-01 | Los horarios antes de apertura o posteriores al cierre jamás se ofrecen como disponibles")
-    void horariosFueraDeAperturaYCierre_noSeOfrecen() {
+    void horariosFueraDeAperturaYCierre() {
         DisponibilidadResponse disp = service.consultarDisponibilidad(1L, FECHA);
 
         // Antes de la apertura (09:00)

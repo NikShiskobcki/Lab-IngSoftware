@@ -89,7 +89,7 @@ public class CancelarTurnoFunctionalTest {
     // ---------- CP-US60-01: Cancelar Turno en Estado Agendado (204 No Content) ----------
     @Test
     @DisplayName("CP-US60-01 | Cancelar turno en estado 'Agendado' retorna HTTP 204 No Content")
-    void cancelarTurno_estadoAgendado_retorna204() {
+    void cancelarTurnoAgendado() {
         Reserva turno = crearReservaMock(15, "Agendado", LocalTime.of(9, 0));
         when(reservaRepository.findById(15)).thenReturn(Optional.of(turno));
 
@@ -102,7 +102,7 @@ public class CancelarTurnoFunctionalTest {
     // ---------- CP-US60-02: Cancelar Turno en Estado SOLICITADO (204 No Content) ----------
     @Test
     @DisplayName("CP-US60-02 | Cancelar turno en estado 'SOLICITADO' retorna HTTP 204 No Content")
-    void cancelarTurno_estadoSolicitado_retorna204() {
+    void cancelarTurnoSolicitado() {
         Reserva turno = crearReservaMock(16, "SOLICITADO", LocalTime.of(9, 30));
         when(reservaRepository.findById(16)).thenReturn(Optional.of(turno));
 
@@ -115,7 +115,7 @@ public class CancelarTurnoFunctionalTest {
     // ---------- CP-US60-03: Cancelar Turno Inexistente (404 Not Found) ----------
     @Test
     @DisplayName("CP-US60-03 | Intentar cancelar un turno inexistente retorna HTTP 404 Not Found")
-    void cancelarTurno_inexistente_retorna404() {
+    void cancelarTurnoInexistente() {
         when(reservaRepository.findById(999)).thenReturn(Optional.empty());
 
         ResponseEntity<?> respuesta = controller.eliminarReserva(999);
@@ -127,7 +127,7 @@ public class CancelarTurnoFunctionalTest {
     // ---------- CP-US60-06: Liberación del Horario tras Cancelación ----------
     @Test
     @DisplayName("CP-US60-06 | Efecto de negocio: Al cancelar el turno, el horario vuelve a estar disponible")
-    void cancelarTurno_liberaHorarioEnDisponibilidad() {
+    void cancelarTurnoLiberaHorarioEnDisponibilidad() {
         LocalTime horaOcupada = LocalTime.of(8, 30);
         Reserva turno = crearReservaMock(30, "CONFIRMADO", horaOcupada);
 

@@ -75,7 +75,7 @@ public class PersonalCompletoFunctionalTest {
     // ---------- CP-US58-01: Alta de Personal Válido (PE: Establecimiento Existente) ----------
     @Test
     @DisplayName("CP-US58-01 | Alta de personal con datos válidos retorna HTTP 201 Created")
-    void registrarPersonal_datosValidos_retorna201() {
+    void registrarPersonal() {
         PersonalInput input = crearInput(1L, "Dr. Carlos Gomez", new BigDecimal("1500.00"), EstadoPersonal.ACTIVO);
 
         ResponseEntity<Personal> respuesta = controller.crear(input);
@@ -92,7 +92,7 @@ public class PersonalCompletoFunctionalTest {
     // ---------- CP-US58-02: Alta de Personal con Establecimiento Inexistente ----------
     @Test
     @DisplayName("CP-US58-02 | Alta con establecimiento inexistente lanza IllegalArgumentException (400)")
-    void registrarPersonal_establecimientoInexistente_lanza404() {
+    void registrarPersonalConEstablecimientoInexistente() {
         PersonalInput input = crearInput(999L, "Dr. Fantasma", new BigDecimal("1200.00"), EstadoPersonal.ACTIVO);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -104,7 +104,7 @@ public class PersonalCompletoFunctionalTest {
     // ---------- CP-US58-03: Consulta por ID Existente ----------
     @Test
     @DisplayName("CP-US58-03 | Consultar personal por ID existente retorna HTTP 200 OK")
-    void consultarPersonal_idExistente_retorna200() {
+    void consultarPersonalExistente() {
         Personal p = new Personal();
         p.setId(50L);
         p.setNombre("Dra. Lucia Mendez");
@@ -120,7 +120,7 @@ public class PersonalCompletoFunctionalTest {
     // ---------- CP-US58-04: Consulta por ID Inexistente ----------
     @Test
     @DisplayName("CP-US58-04 | Consultar personal por ID inexistente lanza ResourceNotFoundException (404)")
-    void consultarPersonal_idInexistente_lanza404() {
+    void consultarPersonalInexistente() {
         when(personalRepository.findById(888L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> controller.obtener(888L));
@@ -129,7 +129,7 @@ public class PersonalCompletoFunctionalTest {
     // ---------- CP-US58-05: Listado General de Personal ----------
     @Test
     @DisplayName("CP-US58-05 | Listar personal retorna HTTP 200 OK con colección")
-    void listarPersonal_retornaColeccion() {
+    void listarPersonal() {
         Personal p1 = new Personal();
         p1.setId(1L);
         Personal p2 = new Personal();
@@ -145,7 +145,7 @@ public class PersonalCompletoFunctionalTest {
     // ---------- CP-US58-06: Modificación de Personal Existente ----------
     @Test
     @DisplayName("CP-US58-06 | Actualizar personal existente retorna HTTP 200 OK con datos modificados")
-    void actualizarPersonal_existente_retorna200() {
+    void actualizarPersonal() {
         Personal existente = new Personal();
         existente.setId(50L);
         existente.setNombre("Dr. Original");
@@ -164,7 +164,7 @@ public class PersonalCompletoFunctionalTest {
     // ---------- CP-US58-07: Modificación con Establecimiento Inexistente ----------
     @Test
     @DisplayName("CP-US58-07 | Actualizar personal con establecimiento inexistente lanza IllegalArgumentException (400)")
-    void actualizarPersonal_establecimientoInexistente_lanza404() {
+    void actualizarPersonalConEstablecimientoInexistente() {
         Personal existente = new Personal();
         existente.setId(50L);
         when(personalRepository.findById(50L)).thenReturn(Optional.of(existente));
@@ -178,7 +178,7 @@ public class PersonalCompletoFunctionalTest {
     // ---------- CP-US58-08: Eliminación de Personal Existente ----------
     @Test
     @DisplayName("CP-US58-08 | Eliminar personal existente retorna HTTP 204 No Content")
-    void eliminarPersonal_existente_retorna204() {
+    void eliminarPersonal() {
         when(personalRepository.existsById(50L)).thenReturn(true);
 
         ResponseEntity<Void> respuesta = controller.eliminar(50L);
@@ -190,7 +190,7 @@ public class PersonalCompletoFunctionalTest {
     // ---------- CP-US58-09: Eliminación de Personal Inexistente ----------
     @Test
     @DisplayName("CP-US58-09 | Eliminar personal inexistente lanza ResourceNotFoundException (404)")
-    void eliminarPersonal_inexistente_lanza404() {
+    void eliminarPersonalInexistente() {
         when(personalRepository.existsById(999L)).thenReturn(false);
 
         assertThrows(ResourceNotFoundException.class, () -> controller.eliminar(999L));
@@ -201,7 +201,7 @@ public class PersonalCompletoFunctionalTest {
     @ParameterizedTest(name = "CP-US58-10 | PE: Alta de personal en estado {0} se persiste correctamente")
     @EnumSource(EstadoPersonal.class)
     @DisplayName("CP-US58-10 | PE: Estados válidos (ACTIVO, INACTIVO) son permitidos en el registro")
-    void registrarPersonal_estadosValidos(EstadoPersonal estado) {
+    void registrarPersonalEstadosValidos(EstadoPersonal estado) {
         PersonalInput input = crearInput(1L, "Dra. Test", new BigDecimal("1000.00"), estado);
 
         ResponseEntity<Personal> resp = controller.crear(input);
@@ -213,7 +213,7 @@ public class PersonalCompletoFunctionalTest {
     // ---------- CP-US58-11: Caja Negra - AVL en Costo de Consulta ----------
     @Test
     @DisplayName("CP-US58-11 | AVL: Costo consulta en frontera válida (0.01) es aceptado")
-    void costoConsulta_fronteraValida_retorna201() {
+    void costoConsultaFronteraValida() {
         PersonalInput input = crearInput(1L, "Dr. Economico", new BigDecimal("0.01"), EstadoPersonal.ACTIVO);
 
         ResponseEntity<Personal> resp = controller.crear(input);

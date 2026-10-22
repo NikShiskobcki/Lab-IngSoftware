@@ -48,7 +48,7 @@ public class ReservaPersonalInexistenteFunctionalTest {
 
     @Test
     @DisplayName("CP-US63-API-02 | Consultar disponibilidad para personal inexistente lanza ResourceNotFoundException (404)")
-    void consultarDisponibilidad_personalInexistente_lanza404() {
+    void consultarDisponibilidadPersonalInexistente() {
         when(personalRepository.findById(9999L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,

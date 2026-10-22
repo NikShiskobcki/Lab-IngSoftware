@@ -32,7 +32,7 @@ public class ReservaOcupadaFunctionalTest extends TurnoValidadorTestBase {
     // ---------- CP-US64-01: Colisión con Turno Agendado (TD: Estado Agendado) ----------
     @Test
     @DisplayName("CP-US64-01 | TD: Reserva para horario ocupado por turno 'Agendado' -> Pasa a 'Rechazado/Turno Ocupado'")
-    void reservaHorarioOcupado_porTurnoAgendado_cambiaARechazadoTurnoOcupado() {
+    void reservaHorarioOcupadoPorTurnoAgendado() {
         LocalDate fecha = futuro();
         LocalTime hora = LocalTime.of(10, 0);
 
@@ -55,7 +55,7 @@ public class ReservaOcupadaFunctionalTest extends TurnoValidadorTestBase {
     @ParameterizedTest(name = "CP-US64-02 | TD: Horario ocupado por turno previo en estado '{0}' -> Rechazado/Turno Ocupado")
     @ValueSource(strings = {"Atendido", "Facturado"})
     @DisplayName("CP-US64-02 | TD: Turnos previos en 'Atendido' o 'Facturado' también bloquean el horario")
-    void reservaHorarioOcupado_porTurnosAtendidosOFacturados_rechazaComoOcupado(String estadoBloqueante) {
+    void reservaHorarioOcupadoPorTurnosAtendidosOFacturados(String estadoBloqueante) {
         LocalDate fecha = futuro();
         LocalTime hora = LocalTime.of(11, 30);
 
@@ -81,7 +81,7 @@ public class ReservaOcupadaFunctionalTest extends TurnoValidadorTestBase {
             "Rechazado/Turno Ocupado"
     })
     @DisplayName("CP-US64-03 | TD: Turnos cancelados o rechazados dejan el horario libre para nuevas reservas")
-    void reservaHorario_turnoPrevioCanceladoORechazado_quedaAgendado(String estadoNoBloqueante) {
+    void reservaHorarioConTurnoPrevioCanceladoORechazado(String estadoNoBloqueante) {
         LocalDate fecha = futuro();
         LocalTime hora = LocalTime.of(16, 0);
 

@@ -63,7 +63,7 @@ public class ReservaOcupadaFunctionalTest {
 
     @Test
     @DisplayName("CP-US64-API-01 | Un slot con reserva en CONFIRMADO es excluido de los horarios disponibles")
-    void slotOcupado_noApareceEnDisponibilidad() {
+    void slotOcupadoNoApareceEnDisponibilidad() {
         LocalTime slotOcupado = LocalTime.of(9, 0);
 
         Reserva r = new Reserva();

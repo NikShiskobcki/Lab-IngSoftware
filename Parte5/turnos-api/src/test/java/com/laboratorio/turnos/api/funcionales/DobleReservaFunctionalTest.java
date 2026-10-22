@@ -60,7 +60,7 @@ public class DobleReservaFunctionalTest {
 
     @Test
     @DisplayName("CP-US62-API-01 | Dos solicitudes para el mismo slot generan eventos MQTT independientes con ID único")
-    void solicitudesConcurrentes_generanEventosMqttConIdUnico() {
+    void solicitudesConcurrentes() {
         LocalDate fecha = LocalDate.now().plusDays(3);
         LocalTime hora = LocalTime.of(10, 0);
 

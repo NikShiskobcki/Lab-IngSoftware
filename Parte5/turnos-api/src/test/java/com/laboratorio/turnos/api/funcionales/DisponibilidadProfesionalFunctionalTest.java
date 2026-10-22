@@ -87,7 +87,7 @@ public class DisponibilidadProfesionalFunctionalTest {
     // ---------- CP-US61-01: Disponibilidad Total sin Ocupación (PE: Profesional Activo Libre) ----------
     @Test
     @DisplayName("CP-US61-01 | PE: Profesional ACTIVO sin reservas ofrece todos los slots de 30 min")
-    void disponibilidad_profesionalActivoSinReservas_ofreceTodosLosSlots() {
+    void disponibilidadProfesionalActivoSinReservas() {
         mockPersonal(1L, EstadoPersonal.ACTIVO);
         when(reservaRepository.findByIdPersonalAndFechaTurnoOrderByHoraTurnoAsc(1, FECHA_TEST))
                 .thenReturn(Collections.emptyList());
@@ -114,7 +114,7 @@ public class DisponibilidadProfesionalFunctionalTest {
     // ---------- CP-US61-02: Disponibilidad con Slots Ocupados (Filtro de Ocupación) ----------
     @Test
     @DisplayName("CP-US61-02 | Slots ocupados por reservas confirmadas se excluyen de la disponibilidad")
-    void disponibilidad_conReservasOcupadas_excluyeSlotsOcupados() {
+    void disponibilidadConReservasOcupadas() {
         mockPersonal(1L, EstadoPersonal.ACTIVO);
         Reserva r1 = mockReserva(LocalTime.of(8, 30), "CONFIRMADO");
         Reserva r2 = mockReserva(LocalTime.of(10, 0), "CONFIRMADO");
@@ -141,7 +141,7 @@ public class DisponibilidadProfesionalFunctionalTest {
     // ---------- CP-US61-03: Profesional Inactivo (PE: Clase Inválida de Estado) ----------
     @Test
     @DisplayName("CP-US61-03 | PE: Profesional INACTIVO no tiene disponibilidad (lista vacía)")
-    void disponibilidad_profesionalInactivo_retornaListaVacia() {
+    void disponibilidadProfesionalInactivo() {
         mockPersonal(2L, EstadoPersonal.INACTIVO);
 
         ResponseEntity<DisponibilidadResponse> respuesta = controller.consultarDisponibilidad(2L, FECHA_TEST);
@@ -154,7 +154,7 @@ public class DisponibilidadProfesionalFunctionalTest {
     // ---------- CP-US61-04: Profesional Inexistente (404 Not Found) ----------
     @Test
     @DisplayName("CP-US61-04 | Consultar disponibilidad de profesional inexistente lanza ResourceNotFoundException (404)")
-    void disponibilidad_profesionalInexistente_lanza404() {
+    void disponibilidadProfesionalInexistente() {
         when(personalRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> controller.consultarDisponibilidad(999L, FECHA_TEST));
@@ -163,7 +163,7 @@ public class DisponibilidadProfesionalFunctionalTest {
     // ---------- CP-US61-06: AVL en Fronteras de Apertura y Cierre ----------
     @Test
     @DisplayName("CP-US61-06 | AVL: Primer slot coincide exactamente con apertura y último slot no sobrepasa cierre")
-    void disponibilidad_valoresLimite_aperturaYCierre() {
+    void disponibilidadValoresLimiteAperturaYCierre() {
         mockPersonal(1L, EstadoPersonal.ACTIVO);
         when(reservaRepository.findByIdPersonalAndFechaTurnoOrderByHoraTurnoAsc(1, FECHA_TEST))
                 .thenReturn(Collections.emptyList());

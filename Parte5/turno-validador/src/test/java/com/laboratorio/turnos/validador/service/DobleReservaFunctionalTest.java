@@ -31,7 +31,7 @@ public class DobleReservaFunctionalTest extends TurnoValidadorTestBase {
     // ---------- Dos Solicitudes Idénticas Simultáneas (TD: Regla Colisión Exacta) ----------
     @Test
     @DisplayName("CP-US62-01 | TD: Dos solicitudes simultáneas para el mismo horario -> La 1ra se agenda y la 2da se rechaza como Ocupado")
-    void dobleReserva_mismoHorario_primeraAgendadaSegundaRechazada() {
+    void dobleReservaMismoHorario() {
         LocalDate fecha = futuro();
         LocalTime hora = LocalTime.of(10, 0);
 
@@ -65,7 +65,7 @@ public class DobleReservaFunctionalTest extends TurnoValidadorTestBase {
     // ---------- CP-US62-02: AVL - Turnos Contiguos Inmediatos (Sin Solapamiento) ----------
     @Test
     @DisplayName("CP-US62-02 | AVL: Turnos contiguos inmediatos (10:00-10:30 y 10:30-11:00) no colisionan y se agendan ambos")
-    void turnosContiguos_fronteraExacta_ambosAgendados() {
+    void turnosContiguosFronteraExacta() {
         LocalDate fecha = futuro();
         LocalTime hora1 = LocalTime.of(10, 0);
         LocalTime hora2 = LocalTime.of(10, 30);
@@ -92,7 +92,7 @@ public class DobleReservaFunctionalTest extends TurnoValidadorTestBase {
     // ---------- CP-US62-03: Solapamiento Parcial (TD: Regla Solapamiento de Intervalo) ----------
     @Test
     @DisplayName("CP-US62-03 | TD: Solapamiento parcial de horarios en la misma ventana de 30 min es rechazado como Ocupado")
-    void solapamientoParcial_rechazaSegundaReserva() {
+    void solapamientoParcial() {
         LocalDate fecha = futuro();
         LocalTime horaBase = LocalTime.of(10, 0);
         LocalTime horaSolapada = LocalTime.of(10, 15); // Solapa con [10:00, 10:30)
