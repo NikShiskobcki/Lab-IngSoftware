@@ -1,0 +1,18 @@
+# acorta los intervalos de revision y limita la memoria para las pruebas de integracion.
+
+#   docker compose -f docker-compose.yml -f docker-compose.integracion.yml up -d <servicios>
+services:
+  turno-validador:
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx256m"
+      # el validador revisa cada 15 s
+      VALIDADOR_INTERVALO_MS: 10000
+  turnos-api:
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx256m"
+  facturacion:
+    environment:
+      FACTURACION_INTERVALO_MS: 15000
+      FACTURACION_DELAY_INICIAL_MS: 5000
