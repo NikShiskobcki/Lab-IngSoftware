@@ -29,7 +29,7 @@ public class ReservaOcupadaFunctionalTest extends TurnoValidadorTestBase {
     private static final String AGENDADO = "Agendado";
     private static final String OCUPADO = "Rechazado/Turno Ocupado";
 
-    // ---------- CP-US64-01: Colisión con Turno Agendado (TD: Estado Agendado) ----------
+    // ---------- CP-US64-01: Colisión con Turno Agendado (Estado Agendado) ----------
     @Test
     @DisplayName("CP-US64-01 | TD: Reserva para horario ocupado por turno 'Agendado' -> Pasa a 'Rechazado/Turno Ocupado'")
     void reservaHorarioOcupadoPorTurnoAgendado() {
@@ -51,7 +51,7 @@ public class ReservaOcupadaFunctionalTest extends TurnoValidadorTestBase {
         verify(reservaRepo).save(nuevaSolicitud);
     }
 
-    // ---------- CP-US64-02: Colisión con Estados Terminales Bloqueantes (TD: Atendido y Facturado) ----------
+    // ---------- CP-US64-02: Colisión con Estados Terminales Bloqueantes (Atendido y Facturado) ----------
     @ParameterizedTest(name = "CP-US64-02 | TD: Horario ocupado por turno previo en estado '{0}' -> Rechazado/Turno Ocupado")
     @ValueSource(strings = {"Atendido", "Facturado"})
     @DisplayName("CP-US64-02 | TD: Turnos previos en 'Atendido' o 'Facturado' también bloquean el horario")
@@ -73,7 +73,7 @@ public class ReservaOcupadaFunctionalTest extends TurnoValidadorTestBase {
                 "El horario ocupado históricamente no debe poder reutilizarse");
     }
 
-    // ---------- CP-US64-03: Horario Previo Rechazado o Cancelado (TD: Estados No Bloqueantes) ----------
+    // ---------- CP-US64-03: Horario Previo Rechazado o Cancelado (Estados No Bloqueantes) ----------
     @ParameterizedTest(name = "CP-US64-03 | TD: Turno previo en estado '{0}' no bloquea el horario -> Nueva pasa a 'Agendado'")
     @ValueSource(strings = {
             "Cancelado",

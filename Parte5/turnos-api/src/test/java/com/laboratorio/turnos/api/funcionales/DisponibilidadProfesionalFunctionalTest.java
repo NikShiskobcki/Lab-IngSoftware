@@ -84,7 +84,7 @@ public class DisponibilidadProfesionalFunctionalTest {
         return r;
     }
 
-    // ---------- CP-US61-01: Disponibilidad Total sin Ocupación (PE: Profesional Activo Libre) ----------
+    // ---------- CP-US61-01: Disponibilidad Total sin Ocupación (Profesional Activo Libre) ----------
     @Test
     @DisplayName("CP-US61-01 | PE: Profesional ACTIVO sin reservas ofrece todos los slots de 30 min")
     void disponibilidadProfesionalActivoSinReservas() {
@@ -138,7 +138,7 @@ public class DisponibilidadProfesionalFunctionalTest {
         assertTrue(body.getHorariosDisponibles().contains(LocalTime.of(10, 30)));
     }
 
-    // ---------- CP-US61-03: Profesional Inactivo (PE: Clase Inválida de Estado) ----------
+    // ---------- CP-US61-03: Profesional Inactivo (Clase Inválida de Estado) ----------
     @Test
     @DisplayName("CP-US61-03 | PE: Profesional INACTIVO no tiene disponibilidad (lista vacía)")
     void disponibilidadProfesionalInactivo() {
@@ -160,7 +160,7 @@ public class DisponibilidadProfesionalFunctionalTest {
         assertThrows(ResourceNotFoundException.class, () -> controller.consultarDisponibilidad(999L, FECHA_TEST));
     }
 
-    // ---------- CP-US61-06: AVL en Fronteras de Apertura y Cierre ----------
+    // ---------- CP-US61-06: Fronteras de Apertura y Cierre ----------
     @Test
     @DisplayName("CP-US61-06 | AVL: Primer slot coincide exactamente con apertura y último slot no sobrepasa cierre")
     void disponibilidadValoresLimiteAperturaYCierre() {

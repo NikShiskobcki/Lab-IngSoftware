@@ -16,13 +16,13 @@ import static org.mockito.Mockito.when;
 /**
  * IS-76 / US-65 - Prueba Reserva Fuera de horario
  */
-@DisplayName("US-65 | Prueba Reserva Fuera de horario (Caja Negra)")
+@DisplayName("US-65 | Prueba Reserva Fuera de horario")
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class ReservaFueraDeHorarioFunctionalTest extends TurnoValidadorTestBase {
 
     private static final String AGENDADO = "Agendado";
 
-    // ---------- CP-US65-04: AVL - Fecha y Hora Futura Válida ----------
+    // ---------- CP-US65-04: - Fecha y Hora Futura Válida ----------
     @Test
     @DisplayName("CP-US65-04 | AVL: Reserva en fecha y hora estrictamente futura -> Agendado")
     void reservaFutura() {

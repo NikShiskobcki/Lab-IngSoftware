@@ -72,7 +72,7 @@ public class PersonalCompletoFunctionalTest {
         return input;
     }
 
-    // ---------- CP-US58-01: Alta de Personal Válido (PE: Establecimiento Existente) ----------
+    // ---------- CP-US58-01: Alta de Personal Válido (Establecimiento Existente) ----------
     @Test
     @DisplayName("CP-US58-01 | Alta de personal con datos válidos retorna HTTP 201 Created")
     void registrarPersonal() {
@@ -197,7 +197,7 @@ public class PersonalCompletoFunctionalTest {
         verify(personalRepository, never()).deleteById(anyLong());
     }
 
-    // ---------- CP-US58-10: Caja Negra - Partición de Equivalencia sobre Estado del Personal ----------
+    // ---------- CP-US58-10: Partición de Equivalencia sobre Estado del Personal ----------
     @ParameterizedTest(name = "CP-US58-10 | PE: Alta de personal en estado {0} se persiste correctamente")
     @EnumSource(EstadoPersonal.class)
     @DisplayName("CP-US58-10 | PE: Estados válidos (ACTIVO, INACTIVO) son permitidos en el registro")
@@ -210,7 +210,7 @@ public class PersonalCompletoFunctionalTest {
         assertEquals(estado, resp.getBody().getEstado());
     }
 
-    // ---------- CP-US58-11: Caja Negra - AVL en Costo de Consulta ----------
+    // ---------- CP-US58-11: Costo de Consulta ----------
     @Test
     @DisplayName("CP-US58-11 | AVL: Costo consulta en frontera válida (0.01) es aceptado")
     void costoConsultaFronteraValida() {

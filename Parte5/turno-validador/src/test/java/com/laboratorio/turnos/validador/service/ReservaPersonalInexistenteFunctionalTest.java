@@ -22,7 +22,7 @@ public class ReservaPersonalInexistenteFunctionalTest extends TurnoValidadorTest
 
     private static final String NO_VALIDA = "Rechazado/Solicitud No Valida";
 
-    // ---------- CP-US63-01: Profesional Inexistente en la Base de Datos (PE: ID Inexistente) ----------
+    // ---------- CP-US63-01: Profesional Inexistente en la Base de Datos (ID Inexistente) ----------
     @Test
     @DisplayName("CP-US63-01 | PE: Reserva con idPersonal inexistente -> Estado pasa a 'Rechazado/Solicitud No Valida'")
     void reservaPersonalInexistente() {

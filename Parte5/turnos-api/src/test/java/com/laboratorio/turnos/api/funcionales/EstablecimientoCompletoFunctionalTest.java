@@ -62,7 +62,7 @@ public class EstablecimientoCompletoFunctionalTest {
         return input;
     }
 
-    // ---------- CP-US57-01: Alta de Establecimiento Válido (PE: Clase Válida) ----------
+    // ---------- CP-US57-01: Alta de Establecimiento Válido (Clase Válida) ----------
     @Test
     @DisplayName("CP-US57-01 | Alta de establecimiento con datos válidos retorna HTTP 201 Created")
     void registrarEstablecimiento() {
@@ -78,7 +78,7 @@ public class EstablecimientoCompletoFunctionalTest {
         verify(establecimientoRepository, times(1)).save(any(Establecimiento.class));
     }
 
-    // ---------- CP-US57-02: Consulta por ID Existente (PE: ID Existente) ----------
+    // ---------- CP-US57-02: Consulta por ID Existente (ID Existente) ----------
     @Test
     @DisplayName("CP-US57-02 | Consultar establecimiento por ID existente retorna HTTP 200 OK")
     void consultarEstablecimientoExistente() {
@@ -94,7 +94,7 @@ public class EstablecimientoCompletoFunctionalTest {
         assertEquals("TaPronto Central", respuesta.getBody().getNombreComercial());
     }
 
-    // ---------- CP-US57-03: Consulta por ID Inexistente (PE: ID No Existente) ----------
+    // ---------- CP-US57-03: Consulta por ID Inexistente (ID No Existente) ----------
     @Test
     @DisplayName("CP-US57-03 | Consultar establecimiento por ID inexistente lanza ResourceNotFoundException (404)")
     void consultarEstablecimientoInexistente() {
@@ -172,7 +172,7 @@ public class EstablecimientoCompletoFunctionalTest {
         verify(establecimientoRepository, never()).deleteById(anyLong());
     }
 
-    // ---------- CP-US57-09: Caja Negra - PE y AVL en Horarios de Apertura y Cierre ----------
+    // ---------- CP-US57-09: Horarios de Apertura y Cierre ----------
     @Test
     @DisplayName("CP-US57-09 | AVL: Cierre anterior o igual a la apertura es rechazado con IllegalArgumentException")
     void horarioCierreAnteriorOIgual() {
