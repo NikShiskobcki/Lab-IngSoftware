@@ -1,0 +1,77 @@
+==============================================================
+ PRUEBAS DE INTEGRACION ENTRE MODULOS (API -> validador -> facturacion)
+==============================================================
+Servidor: http://localhost:8080 | Fecha futura: 2026-10-26 | Fecha pasada: 2026-10-22
+
+>>> Datos base
+Establecimiento 1 | Profesional activo 1 | Profesional inactivo 2
+
+>>> Envio de solicitudes por la API
+  R1 (cliente A, 10:00)            HTTP 201 id=1
+  R2 (cliente A, 12:00)            HTTP 201 id=2
+  R3 (cliente B, 14:00)            HTTP 201 id=3
+  R4 (cliente C, 14:00, mismo horario que R3) HTTP 201 id=4
+  R5 (profesional inactivo)        HTTP 201 id=5
+  R6 (profesional inexistente)     HTTP 409
+
+>>> CP-231 | La API guarda la solicitud en la BD con los datos enviados
+  [OK]    CP-231 | email guardado de R1 | integracion.a.1792766145@correo.com
+  [OK]    CP-231 | profesional guardado de R1 | 1
+
+>>> CP-232 | El validador lee la solicitud de la BD y la agenda (espera hasta 150s)
+  [OK]    CP-232 | estado de R1 tras la validacion | Agendado
+  [OK]    CP-232 | estado de R2 tras la validacion | Agendado
+
+>>> CP-233 | Dos solicitudes para el mismo horario: se agenda la primera y se rechaza la otra
+  [OK]    CP-233 | estado de R3 (primera en llegar) | Agendado
+  [OK]    CP-233 | estado de R4 (mismo horario) | Rechazado/Turno Ocupado
+  [OK]    CP-233 | turnos agendados en ese horario | 1
+
+>>> CP-234 | Solicitud de un profesional inactivo
+  [OK]    CP-234 | estado de R5 | Rechazado/Solicitud No Valida
+
+>>> CP-235 | Solicitud de un profesional inexistente (la BD rechaza por clave foranea)
+  [OK]    CP-235 | codigo HTTP de la API | 409
+  [OK]    CP-235 | filas guardadas para ese profesional | 0
+
+>>> CP-236 | La agenda de la API muestra el estado que dejo el validador
+  [OK]    CP-236 | estado de R1 en la agenda | Agendado
+  [OK]    CP-236 | estado de R4 en la agenda | Rechazado/Turno Ocupado
+
+>>> CP-237 | La disponibilidad no ofrece un horario ya agendado (INC-02)
+  [BUG]   CP-237 | horario 10:00 (R1 agendada) ofrecido como libre | esperado: '0' | obtenido: '1' | incidencia INC-02
+
+>>> Se simula que paso la fecha de R1 y R2 (cambio de fecha en la BD, como en demo-completo.sh)
+
+>>> CP-238 | Turno agendado cuya fecha paso: validador -> Atendido -> facturacion -> Facturado
+    (espera hasta 150s para Atendido y 420s para Facturado)
+  [OK]    CP-238 | R1 llego a Atendido | Atendido
+  [OK]    CP-238 | R1 llego a Facturado | Facturado
+  [OK]    CP-238 | R2 llego a Facturado | Facturado
+
+>>> CP-239 | Dos turnos del mismo cliente y mes: un cliente, una factura, dos items, total sumado
+  [OK]    CP-239 | clientes con el email del cliente A | 1
+  [OK]    CP-239 | facturas del cliente A en el mes del turno | 1
+  [OK]    CP-239 | items de esa factura | 2
+  [OK]    CP-239 | total de la factura | 3000.00
+
+>>> CP-240 | Una reserva Atendido o Facturado no se puede modificar ni eliminar por la API
+  [OK]    CP-240 | codigo HTTP del PUT | 400
+  [OK]    CP-240 | codigo HTTP del DELETE | 400
+  [OK]    CP-240 | R1 sigue en la BD, Facturado | Facturado
+
+==============================================================
+ RESUMEN
+==============================================================
+CP-231 passed
+CP-232 passed
+CP-233 passed
+CP-234 passed
+CP-235 passed
+CP-236 passed
+CP-237 bug detectado (INC-02)
+CP-238 passed
+CP-239 passed
+CP-240 passed
+
+Verificaciones OK: 22 | Fallas: 0 | Bugs conocidos: 1

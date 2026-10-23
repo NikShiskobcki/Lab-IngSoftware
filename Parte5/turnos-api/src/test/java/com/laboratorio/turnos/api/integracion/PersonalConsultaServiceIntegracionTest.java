@@ -7,8 +7,6 @@ import com.laboratorio.turnos.api.personal.dto.DisponibilidadResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
@@ -20,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Import(PersonalConsultaService.class)
-@DisplayName("Nivel 2 | PersonalConsultaService con repositorios reales y MariaDB")
+@DisplayName("PersonalConsultaService con repositorios reales y MariaDB")
 class PersonalConsultaServiceIntegracionTest extends IntegracionJpaBaseTest {
-/*
+
     private static final LocalDate FECHA = LocalDate.of(2030, 1, 1);
 
     @Autowired PersonalConsultaService servicio;
@@ -56,11 +54,11 @@ class PersonalConsultaServiceIntegracionTest extends IntegracionJpaBaseTest {
         assertThat(horarios.get(19)).isEqualTo(LocalTime.of(17, 30));
     }
 
-    // el validador deja estos estados cuando un turno queda tomado: el horario no puede verse como libre
-    @ParameterizedTest(name = "Una reserva en estado {0} oculta ese horario")
-    @ValueSource(strings = {"Agendado", "Atendido", "Facturado"})
-    void reservaTomadaOcultaElHorario(String estado) {
-        sembrarReserva(1, "10:00", estado);
+    // el validador deja un turno futuro en Agendado: ese horario no puede verse como libre
+    @Test
+    @DisplayName("Una reserva Agendado oculta ese horario")
+    void reservaAgendadaOcultaElHorario() {
+        sembrarReserva(1, "10:00", "Agendado");
 
         List<LocalTime> horarios = servicio.consultarDisponibilidad(1L, FECHA).getHorariosDisponibles();
 
@@ -107,5 +105,5 @@ class PersonalConsultaServiceIntegracionTest extends IntegracionJpaBaseTest {
         assertThat(agenda.getTurnos()).extracting(t -> t.getHora())
                 .containsExactly(LocalTime.of(9, 0), LocalTime.of(10, 0), LocalTime.of(11, 0));
         assertThat(agenda.getTurnos().get(0).getEstado()).isEqualTo("SOLICITADO");
-    }*/
+    }
 }
