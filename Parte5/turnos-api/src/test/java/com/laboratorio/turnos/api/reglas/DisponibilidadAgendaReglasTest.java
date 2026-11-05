@@ -201,9 +201,7 @@ class DisponibilidadAgendaReglasTest {
      * INC-02 (incidencia detectada): el sistema agenda turnos con estado "Agendado"/"Atendido"/"Facturado",
      * pero la consulta de disponibilidad solo considera ocupado el estado legado "CONFIRMADO".
      * Resultado: un turno Agendado sigue apareciendo como horario libre.
-     * Se deja deshabilitado para que la suite quede en verde; quitar @Disabled para reproducirla.
      */
-    @Disabled("INC-02: la disponibilidad ignora los turnos 'Agendado' (solo mira 'CONFIRMADO')")
     @ParameterizedTest(name = "Un turno {0} debe bloquear el horario")
     @ValueSource(strings = {"Agendado", "Atendido", "Facturado"})
     void turnosVigentes_debenBloquear(String estado) {

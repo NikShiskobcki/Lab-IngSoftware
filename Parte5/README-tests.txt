@@ -96,6 +96,7 @@ Tambien fallo reservaAgendadaOcultaElHorario de PersonalConsultaServiceIntegraci
 una reserva Agendada a las 10:00 no excluye las 10:00 de la disponibilidad.
 Un resultado rojo debe revisarse: puede ser un defecto conocido, otro defecto
 o un problema de preparacion del entorno.
+Existe un fallo en las reservas de turnos ya que solo queda sin disponibilidad el turno al estar en estado CONFIRMADO no cuando esta atendido/facturado, lo que provoca que existan doble reservas
 
 Para guardar la salida de un bloque y verla al mismo tiempo:
 

@@ -16,7 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @Import({TurnoValidadorService.class, ColaValidacion.class})
 @DisplayName("Nivel 2 | TurnoValidadorService con repositorios reales y MariaDB (MQTT simulado)")
-class TurnoValidadorServiceIntegracionTest extends IntegracionJPABaseTest {
+class
+TurnoValidadorServiceIntegracionTest extends IntegracionJPABaseTest {
 
     @MockBean ValidadorMqtt mqtt;   // el broker queda fuera de estas pruebas
     @Autowired TurnoValidadorService servicio;
